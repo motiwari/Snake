@@ -38,7 +38,6 @@ class App:
         self.snake.update()
         self.apple.update()
 
-        
         # does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.apple.x = randint(2,9) * config.STEP_SIZE # DON'T SPAWN ON SNAKE
