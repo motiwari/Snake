@@ -37,6 +37,7 @@ class App:
     def on_loop(self):
         self.snake.update()
         self.apple.update()
+
         
         # does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
