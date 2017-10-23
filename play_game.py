@@ -7,8 +7,8 @@ import config
 import gameengine
 
 class App:
-    windowWidth = 800
-    windowHeight = 600
+    windowWidth = config.DEFAULT_WINDOW_WIDTH
+    windowHeight = config.DEFAULT_WINDOW_HEIGHT
     snake = 0
     apple = 0
 
@@ -47,19 +47,21 @@ class App:
             print "Ate apple with value ", self.apple.value
             self.apple.value = 100
 
-
         # does snake collide with itself?
         for i in range(2,self.snake.length):
             # Fix this
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
             if self.gameEngine.isCollision(self.snake.head, dummy_head):
                 print("You lose! Collision: ")
-                print("x[0] (" + str(self.snake.x[0]) + "," + str(self.snake.y[0]) + ")")
-                print("x[" + str(i) + "] (" + str(self.snake.x[i]) + "," + str(self.snake.y[i]) + ")")
                 print "FINAL SCORE: ", self.snake.score
                 exit(0)
 
-        pass
+        if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
+            self.snake.head.y < 0 or self.snake.head.y >= self.windowHeight:
+            print("You lose! Off the board!")
+            print "FINAL SCORE: ", self.snake.score
+            exit(0)
+
 
     def on_render(self):
         self._display_surf.fill((100,100,0))
