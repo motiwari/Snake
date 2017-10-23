@@ -5,6 +5,7 @@ class Head:
     y = 0
     isCollidable = True
 
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -12,11 +13,12 @@ class Head:
 class Snake:
     x = [0]
     y = [0]
+    ars = []
     step = config.STEP_SIZE
     direction = 0
     length = 3
     score = 0
-    
+
     isCollidable = True
     head = None
 
@@ -75,3 +77,6 @@ class Snake:
     def draw(self, surface, image):
         for i in range(0,self.length):
             surface.blit(image,(self.x[i],self.y[i]))
+
+    def addActionAndReward(self, action, reward):
+        self.ars.append((action, reward))

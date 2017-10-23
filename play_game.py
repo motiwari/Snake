@@ -37,6 +37,24 @@ class App:
     def on_loop(self):
         self.snake.update()
         self.apple.update()
+        # does snake collide with itself?
+        for i in range(2,self.snake.length):
+            # Fix this
+            dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
+            if self.gameEngine.isCollision(self.snake.head, dummy_head):
+                self.snake.addActionAndReward(self.snake.direction, 0)
+                print("You lose! Collision: ")
+                print "FINAL SCORE: ", self.snake.score
+                print self.snake.ars
+                exit(0)
+
+        if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
+            self.snake.head.y < 0 or self.snake.head.y >= self.windowHeight:
+            self.snake.addActionAndReward(self.snake.direction, 0)
+            print("You lose! Off the board!")
+            print "FINAL SCORE: ", self.snake.score
+            print self.snake.ars
+            exit(0)
 
         # does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
@@ -45,22 +63,12 @@ class App:
             self.snake.length = self.snake.length + 1
             self.snake.score += self.apple.value
             print "Ate apple with value ", self.apple.value
+            self.snake.addActionAndReward(self.snake.direction, self.apple.value)
             self.apple.value = 100
+        else:
+            self.snake.addActionAndReward(self.snake.direction, 0)
 
-        # does snake collide with itself?
-        for i in range(2,self.snake.length):
-            # Fix this
-            dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
-            if self.gameEngine.isCollision(self.snake.head, dummy_head):
-                print("You lose! Collision: ")
-                print "FINAL SCORE: ", self.snake.score
-                exit(0)
 
-        if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
-            self.snake.head.y < 0 or self.snake.head.y >= self.windowHeight:
-            print("You lose! Off the board!")
-            print "FINAL SCORE: ", self.snake.score
-            exit(0)
 
 
     def on_render(self):
