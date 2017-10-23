@@ -31,10 +31,6 @@ class Snake:
            self.x.append(-100)
            self.y.append(-100)
 
-       # initial positions, no collision.
-       self.x[1] = 1*config.STEP_SIZE
-       self.x[2] = 2*config.STEP_SIZE
-
        self.head = Head(self.x[0], self.x[0])
 
     def update(self):
