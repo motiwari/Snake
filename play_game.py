@@ -36,13 +36,16 @@ class App:
 
     def on_loop(self):
         self.snake.update()
-
+        self.apple.update()
+        
         # does snake eat apple?
-        for i in range(0,self.snake.length):
-            if self.gameEngine.isCollision(self.apple, self.snake.head):
-                self.apple.x = randint(2,9) * config.STEP_SIZE # DON'T SPAWN ON SNAKE
-                self.apple.y = randint(2,9) * config.STEP_SIZE # DON'T SPAWN ON SNAKE
-                self.snake.length = self.snake.length + 1
+        if self.gameEngine.isCollision(self.apple, self.snake.head):
+            self.apple.x = randint(2,9) * config.STEP_SIZE # DON'T SPAWN ON SNAKE
+            self.apple.y = randint(2,9) * config.STEP_SIZE # DON'T SPAWN ON SNAKE
+            self.snake.length = self.snake.length + 1
+            self.snake.score += self.apple.value
+            print "Ate apple with value ", self.apple.value
+            self.apple.value = 100
 
 
         # does snake collide with itself?
@@ -53,6 +56,7 @@ class App:
                 print("You lose! Collision: ")
                 print("x[0] (" + str(self.snake.x[0]) + "," + str(self.snake.y[0]) + ")")
                 print("x[" + str(i) + "] (" + str(self.snake.x[i]) + "," + str(self.snake.y[i]) + ")")
+                print "FINAL SCORE: ", self.snake.score
                 exit(0)
 
         pass
@@ -71,51 +75,28 @@ class App:
             self._running = False
 
         while( self._running ):
-            if config.STEPPING is False:
-                pygame.event.pump()
-                keys = pygame.key.get_pressed()
+            pygame.event.pump()
+            keys = pygame.key.get_pressed()
 
-                if (keys[pygame.K_RIGHT]):
-                    self.snake.moveRight()
+            if (keys[pygame.K_RIGHT]):
+                self.snake.moveRight()
 
-                if (keys[pygame.K_LEFT]):
-                    self.snake.moveLeft()
+            if (keys[pygame.K_LEFT]):
+                self.snake.moveLeft()
 
-                if (keys[pygame.K_UP]):
-                    self.snake.moveUp()
+            if (keys[pygame.K_UP]):
+                self.snake.moveUp()
 
-                if (keys[pygame.K_DOWN]):
-                    self.snake.moveDown()
+            if (keys[pygame.K_DOWN]):
+                self.snake.moveDown()
 
-                if (keys[pygame.K_ESCAPE]):
-                    self._running = False
+            if (keys[pygame.K_ESCAPE]):
+                self._running = False
 
-                self.on_loop()
-                self.on_render()
+            self.on_loop()
+            self.on_render()
 
-                time.sleep (50.0 / 1000.0);
-            else:
-                pygame.event.wait()
-                keys = pygame.key.get_pressed()
-
-                if (keys[pygame.K_RIGHT]):
-                    self.snake.moveRight()
-
-                if (keys[pygame.K_LEFT]):
-                    self.snake.moveLeft()
-
-                if (keys[pygame.K_UP]):
-                    self.snake.moveUp()
-
-                if (keys[pygame.K_DOWN]):
-                    self.snake.moveDown()
-
-                if (keys[pygame.K_ESCAPE]):
-                    self._running = False
-
-                self.on_loop()
-                self.on_render()
-
+            time.sleep (50.0 / 1000.0);
 
         self.on_cleanup()
 

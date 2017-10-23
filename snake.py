@@ -4,7 +4,7 @@ class Head:
     x = 0
     y = 0
     isCollidable = True
-    
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -15,7 +15,8 @@ class Snake:
     step = config.STEP_SIZE
     direction = 0
     length = 3
-
+    score = 0
+    
     isCollidable = True
     head = None
 
