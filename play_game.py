@@ -149,5 +149,5 @@ class App:
         self.on_cleanup()
 
 if __name__ == "__main__" :
-    theApp = App(sys.argv[1] == 'ai')
+    theApp = App(len(sys.argv) > 1 and sys.argv[1] == 'ai')
     theApp.on_execute()
