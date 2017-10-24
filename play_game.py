@@ -5,14 +5,17 @@ import apple
 import snake
 import config
 import gameengine
+import sys
 
 class App:
     windowWidth = config.DEFAULT_WINDOW_WIDTH
     windowHeight = config.DEFAULT_WINDOW_HEIGHT
+    boardWidth = windowWidth/config.STEP_SIZE
+    boardHeight = windowHeight/config.STEP_SIZE
     snake = 0
     apple = 0
 
-    def __init__(self):
+    def __init__(self,usingAI = False):
         self._running = True
         self._display_surf = None
         self._image_surf = None
@@ -20,6 +23,7 @@ class App:
         self.gameEngine = gameengine.GameEngine()
         self.snake = snake.Snake(3)
         self.apple = apple.Apple(5,5)
+        self.usingAI = usingAI
 
     def on_init(self):
         pygame.init()
@@ -88,20 +92,54 @@ class App:
             pygame.event.pump()
             keys = pygame.key.get_pressed()
 
-            if keys[pygame.K_RIGHT] and self.snake.last_moved != 1:
-                self.snake.moveRight()
+            if(self.usingAI):
+                x = self.snake.x[0]
+                y = self.snake.y[0]
+                d = self.snake.direction
 
-            if keys[pygame.K_LEFT] and self.snake.last_moved != 0:
-                self.snake.moveLeft()
+                if self.apple.x-x < 0 and self.snake.last_moved!=0:
+                    print 'd', self.snake.direction
+                    print(self.apple.x-x)
+                    print 1
+                    self.snake.moveLeft()
+                elif self.apple.x-x > 0 and self.snake.last_moved!=1:
+                    print 'd', self.snake.direction
+                    print self.apple.x-x
+                    print 2
+                    self.snake.moveRight()
+                elif self.apple.y-y < 0 and self.snake.last_moved!=3:
+                    print 'd', self.snake.direction
+                    print self.apple.y-y
+                    print 3
+                    self.snake.moveUp()
+                elif self.apple.y-y > 0 and self.snake.last_moved!=2:
+                    print 'd', self.snake.direction
+                    print self.apple.y-y
+                    print 4
+                    self.snake.moveDown()
+                else:
+                    if self.snake.direction == 1 or self.snake.last_moved==0:
+                        print 5
+                        self.snake.direction += 2
+                    else:
+                        print 6
+                        self.snake.direction -= 2
+            else:
 
-            if keys[pygame.K_UP] and self.snake.last_moved != 3:
-                self.snake.moveUp()
+                if keys[pygame.K_RIGHT] and self.snake.last_moved != 1:
+                    self.snake.moveRight()
 
-            if keys[pygame.K_DOWN] and self.snake.last_moved != 2:
-                self.snake.moveDown()
+                if keys[pygame.K_LEFT] and self.snake.last_moved != 0:
+                    self.snake.moveLeft()
 
-            if (keys[pygame.K_ESCAPE]):
-                self._running = False
+                if keys[pygame.K_UP] and self.snake.last_moved != 3:
+                    self.snake.moveUp()
+
+                if keys[pygame.K_DOWN] and self.snake.last_moved != 2:
+                    self.snake.moveDown()
+
+                if (keys[pygame.K_ESCAPE]):
+                    self._running = False
 
             self.on_loop()
             self.on_render()
@@ -111,5 +149,5 @@ class App:
         self.on_cleanup()
 
 if __name__ == "__main__" :
-    theApp = App()
+    theApp = App(len(sys.argv) > 1 and sys.argv[1] == 'ai')
     theApp.on_execute()
