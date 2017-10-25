@@ -7,3 +7,11 @@ class GameEngine:
                 if obj1.y >= obj2.y and obj1.y <= obj2.y + config.STEP_SIZE - 1:
                     return True
         return False
+
+    def getBoardFreeSquares(self, snake):
+        free_squares = []
+        for i in range(0, config.DEFAULT_WINDOW_WIDTH/20):
+            for j in range(0, config.DEFAULT_WINDOW_HEIGHT/20):
+                if not (config.STEP_SIZE*i in snake.x and config.STEP_SIZE*j in snake.y):
+                    free_squares.append((config.STEP_SIZE*i,config.STEP_SIZE*j))
+        return free_squares

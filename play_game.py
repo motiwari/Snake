@@ -46,6 +46,7 @@ class App:
         self.gameEngine = gameengine.GameEngine()
         self.snake = snake.Snake(3)
         self.apple = apple.Apple(5,5)
+        self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
         self.usingAI = usingAI
 
     def on_init(self):
@@ -85,18 +86,15 @@ class App:
 
         # does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
-            self.apple.x = randint(2,9) * config.STEP_SIZE # DON'T SPAWN ON SNAKE
-            self.apple.y = randint(2,9) * config.STEP_SIZE # DON'T SPAWN ON SNAKE
             self.snake.length = self.snake.length + 1
             self.snake.score += self.apple.value
             print "Ate apple with value ", self.apple.value
             self.snake.addActionAndReward(self.snake.direction, self.apple.value)
             self.apple.value = 100
+            self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
+
         else:
             self.snake.addActionAndReward(self.snake.direction, 0)
-
-
-
 
     def on_render(self):
         self._display_surf.fill((100,100,0))
@@ -153,16 +151,13 @@ class App:
                                 self.snake.direction = 0
 
             else:
-
+                # Interpret keystroke
                 if keys[pygame.K_RIGHT] and self.snake.last_moved != 1:
                     self.snake.moveRight()
-
                 if keys[pygame.K_LEFT] and self.snake.last_moved != 0:
                     self.snake.moveLeft()
-
                 if keys[pygame.K_UP] and self.snake.last_moved != 3:
                     self.snake.moveUp()
-
                 if keys[pygame.K_DOWN] and self.snake.last_moved != 2:
                     self.snake.moveDown()
 
@@ -172,7 +167,7 @@ class App:
             self.on_loop()
             self.on_render()
 
-            time.sleep (2.0 / 1000.0);
+            time.sleep((100.0 - config.SPEED) / 1000.0);
 
         self.on_cleanup()
         return self.snake.score()
