@@ -91,7 +91,13 @@ class App:
             print "Ate apple with value ", self.apple.value
             self.snake.addActionAndReward(self.snake.direction, self.apple.value)
             self.apple.value = 100
-            self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
+            freeSqs = self.gameEngine.getBoardFreeSquares(self.snake)
+            if freeSqs == []:
+                print "You WON Snake!!"
+                print "FINAL SCORE: ", self.snake.score
+                exit(0)
+            else:
+                self.apple.x, self.apple.y = random.choice(freeSqs)
 
         else:
             self.snake.addActionAndReward(self.snake.direction, 0)
