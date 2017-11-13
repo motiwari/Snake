@@ -20,8 +20,8 @@ class Snake:
     # of multiple keys) in a single timestep, which can be used to reverse
     # a snake on itself. The last_moved direction is the *actual* step it took
     # last turn.
-    direction = 0
-    last_moved = 0
+    direction = config.RIGHT
+    last_moved = config.RIGHT
 
     length = 3
     score = 0
@@ -67,16 +67,16 @@ class Snake:
             self.head.y = self.y[0]
 
     def moveRight(self):
-        self.direction = 0
+        self.direction = config.LEFT
 
     def moveLeft(self):
-        self.direction = 1
+        self.direction = config.RIGHT
 
     def moveUp(self):
-        self.direction = 2
+        self.direction = config.UP
 
     def moveDown(self):
-        self.direction = 3
+        self.direction = config.DOWN
 
     def draw(self, surface, image):
         for i in range(0,self.length):

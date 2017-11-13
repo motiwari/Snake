@@ -10,13 +10,13 @@ import random
 
 def isNextMoveCollision(pyg,direction):
     dummy_head = None
-    if direction == 0:
+    if direction == config.RIGHT:
         dummy_head = snake.Head(pyg.snake.x[0] + pyg.snake.step, pyg.snake.y[0])
-    if direction == 1:
+    if direction == config.LEFT:
         dummy_head = snake.Head(pyg.snake.x[0] - pyg.snake.step, pyg.snake.y[0])
-    if direction == 2:
+    if direction == config.UP:
         dummy_head = snake.Head(pyg.snake.x[0], pyg.snake.y[0] - pyg.snake.step)
-    if direction == 3:
+    if direction == config.DOWN:
         dummy_head = snake.Head(pyg.snake.x[0], pyg.snake.y[0] + pyg.snake.step)
 
     #Check Board collision
@@ -154,18 +154,18 @@ class App:
                                 self.snake.direction = i
                                 break
                             if i == 4: #No move exists, move right
-                                self.snake.direction = 0
+                                self.snake.direction = config.RIGHT
 
             else:
                 # Interpret keystroke
-                if keys[pygame.K_RIGHT] and self.snake.last_moved != 1:
-                    self.snake.moveRight()
-                if keys[pygame.K_LEFT] and self.snake.last_moved != 0:
+                if keys[pygame.K_LEFT] and self.snake.last_moved != config.RIGHT:
                     self.snake.moveLeft()
-                if keys[pygame.K_UP] and self.snake.last_moved != 3:
-                    self.snake.moveUp()
-                if keys[pygame.K_DOWN] and self.snake.last_moved != 2:
+                if keys[pygame.K_RIGHT] and self.snake.last_moved != config.LEFT:
+                    self.snake.moveRight()
+                if keys[pygame.K_DOWN] and self.snake.last_moved != config.UP:
                     self.snake.moveDown()
+                if keys[pygame.K_UP] and self.snake.last_moved != config.DOWN:
+                    self.snake.moveUp()
 
             if (keys[pygame.K_ESCAPE]):
                 self._running = False
