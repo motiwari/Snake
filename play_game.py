@@ -19,11 +19,11 @@ def isNextMoveCollision(pyg,direction):
     if direction == config.DOWN:
         dummy_head = snake.Head(pyg.snake.x[0], pyg.snake.y[0] + pyg.snake.step)
 
-    #Check Board collision
+    # Check Board collision
     if dummy_head.x < 0 or dummy_head.x >= pyg.windowWidth or \
         dummy_head.y < 0 or dummy_head.y >= pyg.windowHeight:
         return True
-    #Check Snake collision
+    # Check Snake collision
     for i in range(1,pyg.snake.length-1): #Need to account for the fact that the snake will have moved by 1, so we don't start on 3rd segment of snake
         dummy_head2 = snake.Head(pyg.snake.x[i], pyg.snake.y[i])
         if pyg.gameEngine.isCollision(dummy_head, dummy_head2):
@@ -65,7 +65,7 @@ class App:
     def on_loop(self):
         self.snake.update()
         self.apple.update()
-        # does snake collide with itself?
+        # Does snake collide with itself?
         for i in range(2,self.snake.length):
             # Fix this
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
@@ -84,7 +84,7 @@ class App:
             print self.snake.ars
             exit(0)
 
-        # does snake eat apple?
+        # Does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.snake.length = self.snake.length + 1
             self.snake.score += self.apple.value
@@ -123,7 +123,7 @@ class App:
                 x = self.snake.x[0]
                 y = self.snake.y[0]
                 d = self.snake.last_moved
-                #See if you can move the same direction
+                # See if you can move the same direction
                 if d == config.RIGHT and self.apple.x - x > 0 and not isNextMoveCollision(self, config.RIGHT):
                     self.snake.moveRight()
                 elif d == config.LEFT and self.apple.x - x < 0 and not isNextMoveCollision(self, config.LEFT):
@@ -132,14 +132,14 @@ class App:
                     self.snake.moveUp()
                 elif d == config.DOWN and self.apple.y - y > 0 and not isNextMoveCollision(self, config.DOWN):
                     self.snake.moveDown()
-                #if you can't move in the same direction, just pick one that brings you closer to the apple
-                elif self.apple.x-x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  #Make sure snake isn't moving right
+                # If you can't move in the same direction, just pick one that brings you closer to the apple
+                elif self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  #Make sure snake isn't moving right
                     self.snake.moveLeft()
-                elif self.apple.x-x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): #Make sure snake isn't moving left
+                elif self.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): #Make sure snake isn't moving left
                     self.snake.moveRight()
-                elif self.apple.y-y < 0 and d != config.DOWN and not isNextMoveCollision(self, config.UP): #Make sure snake isn't moving down
+                elif self.apple.y - y < 0 and d != config.DOWN and not isNextMoveCollision(self, config.UP): #Make sure snake isn't moving down
                     self.snake.moveUp()
-                elif self.apple.y-y > 0 and d != config.UP and not isNextMoveCollision(self, config.DOWN): #Make sure snake isn't moving up
+                elif self.apple.y - y > 0 and d != config.UP and not isNextMoveCollision(self, config.DOWN): #Make sure snake isn't moving up
                     self.snake.moveDown()
                 else:
                     if (d == config.LEFT or d == config.RIGHT) and not isNextMoveCollision(self, d + 2): #case when apple is directly behind snake
@@ -149,11 +149,11 @@ class App:
                     else:
                         x = list(range(0,4))
                         random.shuffle(x)
-                        for i in x + [4]: #iterate until you find a valid move
-                            if i !=4 and not isNextMoveCollision(self,i):
+                        for i in x + [4]: # Iterate until you find a valid move
+                            if i != 4 and not isNextMoveCollision(self,i):
                                 self.snake.direction = i
                                 break
-                            if i == 4: #No move exists, move right
+                            if i == 4: # No move exists, move right
                                 self.snake.direction = config.RIGHT
 
             else:
