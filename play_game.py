@@ -158,17 +158,9 @@ class App:
         x = self.snake.x[0]
         y = self.snake.y[0]
         d = self.snake.last_moved
-        # See if you can move the same direction
-        if d == config.RIGHT and self.apple.x - x > 0 and not isNextMoveCollision(self, config.RIGHT):
-            self.snake.moveRight()
-        elif d == config.LEFT and self.apple.x - x < 0 and not isNextMoveCollision(self, config.LEFT):
-            self.snake.moveLeft()
-        elif d == config.UP and self.apple.y - y < 0 and not isNextMoveCollision(self, config.UP):
-            self.snake.moveUp()
-        elif d == config.DOWN and self.apple.y - y > 0 and not isNextMoveCollision(self, config.DOWN):
-            self.snake.moveDown()
+
         # If you can't move in the same direction, just pick one that brings you closer to the apple
-        elif self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  #Make sure snake isn't moving right
+        if self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  #Make sure snake isn't moving right
             self.snake.moveLeft()
         elif self.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): #Make sure snake isn't moving left
             self.snake.moveRight()
