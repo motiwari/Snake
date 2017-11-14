@@ -8,16 +8,21 @@ import gameengine
 import sys
 import random
 
-def isNextMoveCollision(pyg,direction):
+def isNextMoveCollision(pyg, direction):
     dummy_head = None
-    if direction == config.RIGHT:
-        dummy_head = snake.Head(pyg.snake.x[0] + pyg.snake.step, pyg.snake.y[0])
-    if direction == config.LEFT:
-        dummy_head = snake.Head(pyg.snake.x[0] - pyg.snake.step, pyg.snake.y[0])
-    if direction == config.UP:
-        dummy_head = snake.Head(pyg.snake.x[0], pyg.snake.y[0] - pyg.snake.step)
-    if direction == config.DOWN:
-        dummy_head = snake.Head(pyg.snake.x[0], pyg.snake.y[0] + pyg.snake.step)
+    x_change = {
+        config.RIGHT: pyg.snake.step,
+        config.LEFT: -pyg.snake.step,
+        config.UP: 0,
+        config.DOWN: 0,
+    }
+    y_change = {
+        config.RIGHT: 0,
+        config.LEFT: 0,
+        config.UP: -pyg.snake.step,
+        config.DOWN: pyg.snake.step,
+    }
+    dummy_head = (pyg.snake.x[0] + x_change[direction], pyg.snake.y[0] + y_change[direction])
 
     # Check Board collision
     if dummy_head.x < 0 or dummy_head.x >= pyg.windowWidth or \
