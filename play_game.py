@@ -44,8 +44,9 @@ class App:
     windowHeight = config.DEFAULT_WINDOW_HEIGHT
     boardWidth = windowWidth/config.STEP_SIZE
     boardHeight = windowHeight/config.STEP_SIZE
-    snake = 0
-    apple = 0
+    snake = None
+    apple = None
+    verbose = False
 
     def __init__(self, args):
         self._running = True
@@ -57,6 +58,7 @@ class App:
         self.apple = apple.Apple(5,5)
         self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
         self.usingAI = args.ai
+        self.verbose = args.verbose
 
     def on_init(self):
         pygame.init()
@@ -83,6 +85,7 @@ class App:
                 print("You lose! Collision: ")
                 print "FINAL SCORE: ", self.snake.score
                 print self.snake.ars
+                self.get_state()
                 exit(0)
 
         if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
@@ -91,6 +94,7 @@ class App:
             print("You lose! Off the board!")
             print "FINAL SCORE: ", self.snake.score
             print self.snake.ars
+            self.get_state()
             exit(0)
 
         # Does snake eat apple?
@@ -104,11 +108,13 @@ class App:
             if freeSqs == []:
                 print "You WON Snake!!"
                 print "FINAL SCORE: ", self.snake.score
+                self.get_state()
                 exit(0)
             else:
                 self.apple.x, self.apple.y = random.choice(freeSqs)
 
         else:
+            self.get_state()
             self.snake.addActionAndReward(self.snake.direction, 0)
 
     def on_render(self):
@@ -189,13 +195,22 @@ class App:
                 self.snake.direction = config.RIGHT
 
     def get_state(self):
-        return state.State(self)
+        s = state.State(self)
+        if self.verbose:
+            print "NEW STATE:"
+            print "SCORE: ", s.score
+            print "APPLE: ", s.apple
+            print "HEAD: ", s.head
+            print "TAIL: ", s.tail
+            print "BODY PARTS: ", s.body_parts
+
 
 def get_args(arguments):
     parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+                                    formatter_class=argparse.RawDescriptionHelpFormatter)
     # For generating pairs of sites
     parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
+    parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
     args = parser.parse_args(arguments)
     return args
 

@@ -33,12 +33,12 @@ class Snake:
     updateCount = 0
 
     def __init__(self, length):
-       self.length = length
-       for i in range(0,2000):
-           self.x.append(-100)
-           self.y.append(-100)
+        self.length = length
+        for i in range(0,2000):
+            self.x.append(-100)
+            self.y.append(-100)
 
-       self.head = Head(self.x[0], self.x[0])
+        self.head = Head(self.x[0], self.x[0])
 
     def update(self):
         self.updateCount = self.updateCount + 1
