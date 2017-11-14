@@ -7,6 +7,7 @@ import config
 import gameengine
 import sys
 import random
+import argparse
 
 def isNextMoveCollision(pyg, direction):
     dummy_head = None
@@ -22,14 +23,14 @@ def isNextMoveCollision(pyg, direction):
         config.UP: -pyg.snake.step,
         config.DOWN: pyg.snake.step,
     }
-    dummy_head = (pyg.snake.x[0] + x_change[direction], pyg.snake.y[0] + y_change[direction])
+    dummy_head = snake.Head(pyg.snake.x[0] + x_change[direction], pyg.snake.y[0] + y_change[direction])
 
     # Check Board collision
     if dummy_head.x < 0 or dummy_head.x >= pyg.windowWidth or \
         dummy_head.y < 0 or dummy_head.y >= pyg.windowHeight:
         return True
     # Check Snake collision
-    for i in range(1,pyg.snake.length-1): #Need to account for the fact that the snake will have moved by 1, so we don't start on 3rd segment of snake
+    for i in range(1, pyg.snake.length - 1): # Need to account for the fact that the snake will have moved by 1, so we don't start on 3rd segment of snake
         dummy_head2 = snake.Head(pyg.snake.x[i], pyg.snake.y[i])
         if pyg.gameEngine.isCollision(dummy_head, dummy_head2):
             return True
@@ -43,7 +44,7 @@ class App:
     snake = 0
     apple = 0
 
-    def __init__(self,usingAI = False):
+    def __init__(self, args):
         self._running = True
         self._display_surf = None
         self._image_surf = None
@@ -52,7 +53,7 @@ class App:
         self.snake = snake.Snake(3)
         self.apple = apple.Apple(5,5)
         self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
-        self.usingAI = usingAI
+        self.usingAI = args.ai
 
     def on_init(self):
         pygame.init()
@@ -71,7 +72,7 @@ class App:
         self.snake.update()
         self.apple.update()
         # Does snake collide with itself?
-        for i in range(2,self.snake.length):
+        for i in range(2, self.snake.length):
             # Fix this
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
             if self.gameEngine.isCollision(self.snake.head, dummy_head):
@@ -153,7 +154,7 @@ class App:
         if keys[pygame.K_UP] and self.snake.last_moved != config.DOWN:
             self.snake.moveUp()
 
-    def choose_ai_move():
+    def choose_ai_move(self):
         x = self.snake.x[0]
         y = self.snake.y[0]
         d = self.snake.last_moved
@@ -190,6 +191,15 @@ class App:
                     if i == 4: # No move exists, move right
                         self.snake.direction = config.RIGHT
 
+def get_args(arguments):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    # For generating pairs of sites
+    parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
+    args = parser.parse_args(arguments)
+    return args
+
 if __name__ == "__main__" :
-    theApp = App(len(sys.argv) > 1 and sys.argv[1] == 'ai')
+    args = get_args(sys.argv[1:])
+    theApp = App(args)
     theApp.on_execute()
