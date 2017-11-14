@@ -59,6 +59,7 @@ class App:
         self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
         self.usingAI = args.ai
         self.verbose = args.verbose
+        self.counter = 0
 
     def on_init(self):
         pygame.init()
@@ -77,6 +78,7 @@ class App:
         self.snake.update()
         self.apple.update()
         # Does snake collide with itself?
+
         for i in range(2, self.snake.length):
             # Fix this
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
@@ -85,7 +87,6 @@ class App:
                 print("You lose! Collision: ")
                 print "FINAL SCORE: ", self.snake.score
                 print self.snake.ars
-                self.get_state()
                 exit(0)
 
         if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
@@ -94,7 +95,6 @@ class App:
             print("You lose! Off the board!")
             print "FINAL SCORE: ", self.snake.score
             print self.snake.ars
-            self.get_state()
             exit(0)
 
         # Does snake eat apple?
@@ -108,13 +108,10 @@ class App:
             if freeSqs == []:
                 print "You WON Snake!!"
                 print "FINAL SCORE: ", self.snake.score
-                self.get_state()
                 exit(0)
             else:
                 self.apple.x, self.apple.y = random.choice(freeSqs)
-
         else:
-            self.get_state()
             self.snake.addActionAndReward(self.snake.direction, 0)
 
     def on_render(self):
@@ -146,6 +143,10 @@ class App:
 
             self.on_loop()
             self.on_render()
+            self.counter += 1
+            # TODO: WTF is going on here?
+            if self.counter % 3 ==0:
+                self.get_state()
 
             time.sleep((100.0 - config.SPEED) / 1000.0);
 

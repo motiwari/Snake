@@ -23,7 +23,7 @@ class Snake:
     direction = config.RIGHT
     last_moved = config.RIGHT
 
-    length = 3
+    length = None
     score = 0
 
     isCollidable = True
