@@ -120,52 +120,11 @@ class App:
             keys = pygame.key.get_pressed()
 
             if(self.usingAI):
-                x = self.snake.x[0]
-                y = self.snake.y[0]
-                d = self.snake.last_moved
-                # See if you can move the same direction
-                if d == config.RIGHT and self.apple.x - x > 0 and not isNextMoveCollision(self, config.RIGHT):
-                    self.snake.moveRight()
-                elif d == config.LEFT and self.apple.x - x < 0 and not isNextMoveCollision(self, config.LEFT):
-                    self.snake.moveLeft()
-                elif d == config.UP and self.apple.y - y < 0 and not isNextMoveCollision(self, config.UP):
-                    self.snake.moveUp()
-                elif d == config.DOWN and self.apple.y - y > 0 and not isNextMoveCollision(self, config.DOWN):
-                    self.snake.moveDown()
-                # If you can't move in the same direction, just pick one that brings you closer to the apple
-                elif self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  #Make sure snake isn't moving right
-                    self.snake.moveLeft()
-                elif self.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): #Make sure snake isn't moving left
-                    self.snake.moveRight()
-                elif self.apple.y - y < 0 and d != config.DOWN and not isNextMoveCollision(self, config.UP): #Make sure snake isn't moving down
-                    self.snake.moveUp()
-                elif self.apple.y - y > 0 and d != config.UP and not isNextMoveCollision(self, config.DOWN): #Make sure snake isn't moving up
-                    self.snake.moveDown()
-                else:
-                    if (d == config.LEFT or d == config.RIGHT) and not isNextMoveCollision(self, d + 2): #case when apple is directly behind snake
-                        self.snake.direction = d + 2
-                    elif (d == config.UP or d == config.DOWN) and not isNextMoveCollision(self, d - 2):
-                        self.snake.direction = d - 2
-                    else:
-                        x = list(range(0,4))
-                        random.shuffle(x)
-                        for i in x + [4]: # Iterate until you find a valid move
-                            if i != 4 and not isNextMoveCollision(self,i):
-                                self.snake.direction = i
-                                break
-                            if i == 4: # No move exists, move right
-                                self.snake.direction = config.RIGHT
+                self.choose_ai_move()
 
+            # Not using AI, Snake is player-controlled
             else:
-                # Interpret keystroke
-                if keys[pygame.K_LEFT] and self.snake.last_moved != config.RIGHT:
-                    self.snake.moveLeft()
-                if keys[pygame.K_RIGHT] and self.snake.last_moved != config.LEFT:
-                    self.snake.moveRight()
-                if keys[pygame.K_DOWN] and self.snake.last_moved != config.UP:
-                    self.snake.moveDown()
-                if keys[pygame.K_UP] and self.snake.last_moved != config.DOWN:
-                    self.snake.moveUp()
+                self.use_player_move(keys)
 
             if (keys[pygame.K_ESCAPE]):
                 self._running = False
@@ -177,6 +136,54 @@ class App:
 
         self.on_cleanup()
         return self.snake.score()
+
+    def use_player_move(self, keys):
+        # Interpret keystroke
+        if keys[pygame.K_LEFT] and self.snake.last_moved != config.RIGHT:
+            self.snake.moveLeft()
+        if keys[pygame.K_RIGHT] and self.snake.last_moved != config.LEFT:
+            self.snake.moveRight()
+        if keys[pygame.K_DOWN] and self.snake.last_moved != config.UP:
+            self.snake.moveDown()
+        if keys[pygame.K_UP] and self.snake.last_moved != config.DOWN:
+            self.snake.moveUp()
+
+    def choose_ai_move():
+        x = self.snake.x[0]
+        y = self.snake.y[0]
+        d = self.snake.last_moved
+        # See if you can move the same direction
+        if d == config.RIGHT and self.apple.x - x > 0 and not isNextMoveCollision(self, config.RIGHT):
+            self.snake.moveRight()
+        elif d == config.LEFT and self.apple.x - x < 0 and not isNextMoveCollision(self, config.LEFT):
+            self.snake.moveLeft()
+        elif d == config.UP and self.apple.y - y < 0 and not isNextMoveCollision(self, config.UP):
+            self.snake.moveUp()
+        elif d == config.DOWN and self.apple.y - y > 0 and not isNextMoveCollision(self, config.DOWN):
+            self.snake.moveDown()
+        # If you can't move in the same direction, just pick one that brings you closer to the apple
+        elif self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  #Make sure snake isn't moving right
+            self.snake.moveLeft()
+        elif self.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): #Make sure snake isn't moving left
+            self.snake.moveRight()
+        elif self.apple.y - y < 0 and d != config.DOWN and not isNextMoveCollision(self, config.UP): #Make sure snake isn't moving down
+            self.snake.moveUp()
+        elif self.apple.y - y > 0 and d != config.UP and not isNextMoveCollision(self, config.DOWN): #Make sure snake isn't moving up
+            self.snake.moveDown()
+        else:
+            if (d == config.LEFT or d == config.RIGHT) and not isNextMoveCollision(self, d + 2): #case when apple is directly behind snake
+                self.snake.direction = d + 2
+            elif (d == config.UP or d == config.DOWN) and not isNextMoveCollision(self, d - 2):
+                self.snake.direction = d - 2
+            else:
+                x = list(range(0,4))
+                random.shuffle(x)
+                for i in x + [4]: # Iterate until you find a valid move
+                    if i != 4 and not isNextMoveCollision(self,i):
+                        self.snake.direction = i
+                        break
+                    if i == 4: # No move exists, move right
+                        self.snake.direction = config.RIGHT
 
 if __name__ == "__main__" :
     theApp = App(len(sys.argv) > 1 and sys.argv[1] == 'ai')

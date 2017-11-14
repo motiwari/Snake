@@ -67,10 +67,10 @@ class Snake:
             self.head.y = self.y[0]
 
     def moveRight(self):
-        self.direction = config.LEFT
+        self.direction = config.RIGHT
 
     def moveLeft(self):
-        self.direction = config.RIGHT
+        self.direction = config.LEFT
 
     def moveUp(self):
         self.direction = config.UP
