@@ -3,6 +3,7 @@ import pygame
 import time
 import apple
 import snake
+import state
 import config
 import gameengine
 import sys
@@ -180,7 +181,7 @@ class App:
                 x = list(range(0,4))
                 random.shuffle(x)
                 for i in x: # Iterate until you find a valid move
-                    if not isNextMoveCollision(self,i):
+                    if not isNextMoveCollision(self, i):
                         self.snake.direction = i
                         break
 
@@ -188,10 +189,7 @@ class App:
                 self.snake.direction = config.RIGHT
 
     def get_state(self):
-        for x in range(self.boardWidth):
-            for y in range(self.boardHeights):
-                if self.snake.head.x == x and self.snake.head.y == y:
-                    return
+        return state.State(self)
 
 def get_args(arguments):
     parser = argparse.ArgumentParser(description=__doc__,
