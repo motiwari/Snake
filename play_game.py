@@ -9,6 +9,7 @@ import gameengine
 import sys
 import random
 import argparse
+import pickle
 
 def isNextMoveCollision(pyg, direction):
     dummy_head = None
@@ -59,6 +60,8 @@ class App:
         self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
         self.usingAI = args.ai
         self.verbose = args.verbose
+        self.saveHistory = args.history
+        self.history = []
 
     def on_init(self):
         pygame.init()
@@ -149,7 +152,14 @@ class App:
 
             time.sleep((100.0 - config.SPEED) / 1000.0);
 
+            #save game STATE
+            if(self.saveHistory):
+                if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
+                    self.history.append(state.State(self))
+
+
         self.on_cleanup()
+        pickle.dump(self.history,open('gamehistory.p','wp'))
         return self.snake.score()
 
     def use_player_move(self, keys):
@@ -194,6 +204,7 @@ class App:
                 # No move exists, move right. THIS IS WHERE YOU DIE.
                 self.snake.direction = config.RIGHT
 
+
     def get_state(self):
         s = state.State(self)
         if self.verbose:
@@ -211,6 +222,7 @@ def get_args(arguments):
     # For generating pairs of sites
     parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
     parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
+    parser.add_argument('-h', '--history', help='Collect and Save State History', action='store_true')
     args = parser.parse_args(arguments)
     return args
 
