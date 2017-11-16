@@ -170,6 +170,7 @@ class App:
         self.saveHistory = args.history
         self.history = []
         self.actionHistory = []
+        self.counter = 0
 
     def on_init(self):
         pygame.init()
@@ -188,6 +189,7 @@ class App:
         self.snake.update()
         self.apple.update()
         # Does snake collide with itself?
+
         for i in range(2, self.snake.length):
             # Fix this
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
@@ -225,9 +227,7 @@ class App:
                 exit(0)
             else:
                 self.apple.x, self.apple.y = random.choice(freeSqs)
-
         else:
-            self.get_state()
             self.snake.addActionAndReward(self.snake.direction, 0)
 
     def on_render(self):
@@ -260,6 +260,10 @@ class App:
 
             self.on_loop()
             self.on_render()
+            self.counter += 1
+            # TODO: WTF is going on here?
+            if self.counter % 3 ==0:
+                self.get_state()
 
             #time.sleep((100.0 - config.SPEED) / 1000.0);
 
