@@ -17,7 +17,8 @@ class State:
         self.head = (self.snake.head.x/config.STEP_SIZE, self.snake.head.y/config.STEP_SIZE)
 
         self.body_parts = []
-        for i in range(self.snake.length - 1):
+        # Don't include head or tail
+        for i in range(1, self.snake.length - 1):
             self.body_parts.append((self.snake.x[i]/config.STEP_SIZE, self.snake.y[i]/config.STEP_SIZE))
 
         n = self.snake.length - 1
