@@ -17,8 +17,7 @@ import os
 
 gwidth = config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE
 gheight = config.DEFAULT_WINDOW_HEIGHT/config.STEP_SIZE
-input_channels = 1
-n_hidden = 512
+n_hidden = 20
 input_width = int(gwidth * gheight * 2)
 hidden_activation = None
 n_outputs = 4  # 4 discrete actions are available
@@ -46,6 +45,18 @@ def preprocess_observation(obs):
 
     #add indicators at each coordinate for snake
     b =  [0] * width * height
+
+    x = obs.head[0]
+    y = obs.head[1]
+    #if statement to account for when head goes off board
+    if x >= 0 and y >= 0 and x <width and y < height:
+        b[int(width * y + x)] = 1
+
+    x = obs.tail[0]
+    y = obs.tail[1]
+    #if statement to account for when head goes off board
+    if x >= 0 and y >= 0 and x <width and y < height:
+        b[int(width * y + x)] = 1
 
     for w in obs.body_parts:
         x = w[0]
@@ -95,6 +106,14 @@ training_op = optimizer.minimize(loss, global_step=global_step)
 
 init = tf.global_variables_initializer()
 saver = tf.train.Saver()
+
+from datetime import datetime
+
+#The next few lines are there for the purpose of being able to view things on tensorboard
+now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+root_logdir = "tf_logs"
+logdir = "{}/run-{}/".format(root_logdir, now)
+file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
 
 
 
@@ -271,8 +290,6 @@ class App:
             if(self.saveHistory):
                 if(self.history):
                     if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
-                        print('prior history', self.history[-1])
-                        print('appended history', state.State(self))
                         self.history.append(state.State(self))
                         self.actionHistory.append(self.snake.direction)
                 else:

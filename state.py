@@ -31,10 +31,17 @@ class State:
         if self.score != other.score:
             return False
 
-        if self.n != other.n:
+        if self.snake.length != other.snake.length:
             return False
 
-        for i in range(self.snake.length - 1):
-            self.body_parts.append((self.snake.x[i]/config.STEP_SIZE, self.snake.y[i]/config.STEP_SIZE))
+        if self.head != other.head:
+            return False
+
+        if self.tail != other.tail:
+            return False
+
+        for i,part in enumerate(self.body_parts):
+            if part != other.body_parts[i]:
+                return False
 
         return True
