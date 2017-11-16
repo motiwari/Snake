@@ -10,6 +10,112 @@ import sys
 import random
 import argparse
 import pickle
+import tensorflow as tf
+import numpy as np
+from collections import deque
+import os
+
+gwidth = config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE
+gheight = config.DEFAULT_WINDOW_HEIGHT/config.STEP_SIZE
+input_channels = 1
+n_hidden = 512
+input_width = int(gwidth * gheight * 2)
+hidden_activation = None
+n_outputs = 4  # 4 discrete actions are available
+
+learning_rate = 0.001
+momentum = 0.95
+replay_memory_size = 500000
+replay_memory = deque([], maxlen=replay_memory_size)
+
+
+eps_min = 0.1
+eps_max = 1.0
+eps_decay_steps = 2000000
+
+#convert game state into a feature vector
+def preprocess_observation(obs):
+    width = int(config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE)
+    height = int(config.DEFAULT_WINDOW_HEIGHT/config.STEP_SIZE)
+
+    #add indicators at each coordinate for apple
+    a = [0] * width * height
+    xa = int(obs.apple[0])
+    ya = int(obs.apple[1])
+    a[width * ya + xa] = 1
+
+    #add indicators at each coordinate for snake
+    b =  [0] * width * height
+
+    for w in obs.body_parts:
+        x = w[0]
+        y = w[1]
+        if x >= 0 and y >= 0 and x <width and y < height:
+            b[int(width * y + x)] = 1
+
+    return np.array(a + b)
+
+def q_network(X_state, name):
+    prev_layer = X_state
+    with tf.variable_scope(name) as scope:
+        hidden = tf.layers.dense(prev_layer, n_hidden,
+                                 activation=hidden_activation,
+                                 kernel_initializer=initializer)
+        outputs = tf.layers.dense(hidden, n_outputs,
+                                  kernel_initializer=initializer)
+    trainable_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+                                       scope=scope.name)
+    trainable_vars_by_name = {var.name[len(scope.name):]: var
+                              for var in trainable_vars}
+    return outputs, trainable_vars_by_name
+
+hidden_activation = tf.nn.relu
+initializer = tf.contrib.layers.variance_scaling_initializer()
+X_state = tf.placeholder(tf.float32, shape=[None, input_width])
+online_q_values, online_vars = q_network(X_state, name="q_networks/online")
+target_q_values, target_vars = q_network(X_state, name="q_networks/target")
+
+copy_ops = [target_var.assign(online_vars[var_name])
+            for var_name, target_var in target_vars.items()]
+copy_online_to_target = tf.group(*copy_ops)
+
+X_action = tf.placeholder(tf.int32, shape=[None])
+q_value = tf.reduce_sum(target_q_values * tf.one_hot(X_action, n_outputs),
+                        axis=1, keep_dims=True)
+
+ytrain = tf.placeholder(tf.float32, shape=[None, 1])
+error = tf.abs(ytrain - q_value)
+clipped_error = tf.clip_by_value(error, 0.0, 1.0)
+linear_error = 2 * (error - clipped_error)
+loss = tf.reduce_mean(tf.square(clipped_error) + linear_error)
+
+global_step = tf.Variable(0, trainable=False, name='global_step')
+optimizer = tf.train.MomentumOptimizer(learning_rate, momentum, use_nesterov=True)
+training_op = optimizer.minimize(loss, global_step=global_step)
+
+init = tf.global_variables_initializer()
+saver = tf.train.Saver()
+
+
+
+def epsilon_greedy(q_values, step):
+    epsilon = max(eps_min, eps_max - (eps_max-eps_min) * step/eps_decay_steps)
+    if np.random.rand() < epsilon:
+        return np.random.randint(n_outputs) # random action
+    else:
+        return np.argmax(q_values) # optimal action
+
+n_steps = 4000000  # total number of training steps
+training_start = 10000  # start training after 10,000 game iterations
+training_interval = 4  # run a training step every 4 game iterations
+save_steps = 10  # save the model every 1,000 training steps
+copy_steps = 1  # copy online DQN to target DQN every 10,000 training steps
+discount_rate = 0.99
+skip_start = 90  # Skip the start of every game (it's just waiting time).
+batch_size = 50
+iteration = 0  # game iterations
+checkpoint_path = "./my_dqn.ckpt"
+done = True # env needs to be reset
 
 def isNextMoveCollision(pyg, direction):
     dummy_head = None
@@ -59,9 +165,11 @@ class App:
         self.apple = apple.Apple(5,5)
         self.apple.x, self.apple.y = random.choice(self.gameEngine.getBoardFreeSquares(self.snake))
         self.usingAI = args.ai
+        self.usingNN = args.ain
         self.verbose = args.verbose
         self.saveHistory = args.history
         self.history = []
+        self.actionHistory = []
 
     def on_init(self):
         pygame.init()
@@ -86,31 +194,33 @@ class App:
             if self.gameEngine.isCollision(self.snake.head, dummy_head):
                 self.snake.addActionAndReward(self.snake.direction, 0)
                 print("You lose! Collision: ")
-                print "FINAL SCORE: ", self.snake.score
-                print self.snake.ars
+                print("FINAL SCORE: ", self.snake.score)
+                print(self.snake.ars)
                 self.get_state()
-                exit(0)
+                self._running = False
+                #exit(0)
 
         if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
             self.snake.head.y < 0 or self.snake.head.y >= self.windowHeight:
             self.snake.addActionAndReward(self.snake.direction, 0)
             print("You lose! Off the board!")
-            print "FINAL SCORE: ", self.snake.score
-            print self.snake.ars
+            print("FINAL SCORE: ", self.snake.score)
+            print(self.snake.ars)
             self.get_state()
-            exit(0)
+            self._running = False
+            #exit(0)
 
         # Does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.snake.length = self.snake.length + 1
             self.snake.score += self.apple.value
-            print "Ate apple with value ", self.apple.value
+            print("Ate apple with value ", self.apple.value)
             self.snake.addActionAndReward(self.snake.direction, self.apple.value)
             self.apple.value = 100
             freeSqs = self.gameEngine.getBoardFreeSquares(self.snake)
             if freeSqs == []:
-                print "You WON Snake!!"
-                print "FINAL SCORE: ", self.snake.score
+                print("You WON Snake!!")
+                print("FINAL SCORE: ", self.snake.score)
                 self.get_state()
                 exit(0)
             else:
@@ -133,6 +243,7 @@ class App:
         if self.on_init() == False:
             self._running = False
 
+
         while( self._running ):
             pygame.event.pump()
             keys = pygame.key.get_pressed()
@@ -150,17 +261,25 @@ class App:
             self.on_loop()
             self.on_render()
 
-            time.sleep((100.0 - config.SPEED) / 1000.0);
+            #time.sleep((100.0 - config.SPEED) / 1000.0);
 
             #save game STATE
             if(self.saveHistory):
-                if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
+                if(self.history):
+                    if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
+                        print('prior history', self.history[-1])
+                        print('appended history', state.State(self))
+                        self.history.append(state.State(self))
+                        self.actionHistory.append(self.snake.direction)
+                else:
                     self.history.append(state.State(self))
+                    self.actionHistory.append(self.snake.direction)
 
 
+        #pickle.dump(self.history,open('gamehistory.pkl','wb'))
         self.on_cleanup()
-        pickle.dump(self.history,open('gamehistory.p','wp'))
-        return self.snake.score()
+
+        return self.history, self.actionHistory
 
     def use_player_move(self, keys):
         # Interpret keystroke
@@ -179,41 +298,78 @@ class App:
         d = self.snake.last_moved
 
         # Move closer to the apple
-        if self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  # Make sure snake isn't moving right
-            self.snake.moveLeft()
-        elif self.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): # Make sure snake isn't moving left
-            self.snake.moveRight()
-        elif self.apple.y - y < 0 and d != config.DOWN and not isNextMoveCollision(self, config.UP): # Make sure snake isn't moving down
-            self.snake.moveUp()
-        elif self.apple.y - y > 0 and d != config.UP and not isNextMoveCollision(self, config.DOWN): # Make sure snake isn't moving up
-            self.snake.moveDown()
-        else:
-            # Case when apple is directly behind snake
-            if (d == config.LEFT or d == config.RIGHT) and not isNextMoveCollision(self, d + 2):
-                self.snake.direction = d + 2
-            elif (d == config.UP or d == config.DOWN) and not isNextMoveCollision(self, d - 2):
-                self.snake.direction = d - 2
-            else:
-                x = list(range(0,4))
-                random.shuffle(x)
-                for i in x: # Iterate until you find a valid move
-                    if not isNextMoveCollision(self, i):
-                        self.snake.direction = i
-                        break
+        if self.usingNN:
+                # Online DQN evaluates what to do
+                s = state.State(self)
+                features = preprocess_observation(s)
+                action = 0
+                with tf.Session() as sess:
+                    if os.path.isfile(checkpoint_path + ".index"):
+                            saver.restore(sess, checkpoint_path)
+                    else:
+                        init.run()
+                        copy_online_to_target.run()
+                    step = global_step.eval()
+                    q_values = online_q_values.eval(feed_dict={X_state: [features]})
+                    action = epsilon_greedy(q_values, step)
 
-                # No move exists, move right. THIS IS WHERE YOU DIE.
-                self.snake.direction = config.RIGHT
+                    #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
+                if d == config.RIGHT:
+                    if action != config.LEFT:
+                        self.snake.direction = action
+                    else:
+                        self.snake.direction = d
+                elif d == config.LEFT:
+                    if action != config.RIGHT:
+                        self.snake.direction = action
+                    else:
+                        self.snake.direction = d
+                elif d == config.UP:
+                    if action != config.DOWN:
+                        self.snake.direction = action
+                    else:
+                        self.snake.direction = d
+                elif d == config.DOWN:
+                    if action != config.UP:
+                        self.snake.direction = action
+                    else:
+                        self.snake.direction = d
+        else:
+            if self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  # Make sure snake isn't moving right
+                self.snake.moveLeft()
+            elif self.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): # Make sure snake isn't moving left
+                self.snake.moveRight()
+            elif self.apple.y - y < 0 and d != config.DOWN and not isNextMoveCollision(self, config.UP): # Make sure snake isn't moving down
+                self.snake.moveUp()
+            elif self.apple.y - y > 0 and d != config.UP and not isNextMoveCollision(self, config.DOWN): # Make sure snake isn't moving up
+                self.snake.moveDown()
+            else:
+                # Case when apple is directly behind snake
+                if (d == config.LEFT or d == config.RIGHT) and not isNextMoveCollision(self, d + 2):
+                    self.snake.direction = d + 2
+                elif (d == config.UP or d == config.DOWN) and not isNextMoveCollision(self, d - 2):
+                    self.snake.direction = d - 2
+                else:
+                    x = list(range(0,4))
+                    random.shuffle(x)
+                    for i in x: # Iterate until you find a valid move
+                        if not isNextMoveCollision(self, i):
+                            self.snake.direction = i
+                            break
+
+                    # No move exists, move right. THIS IS WHERE YOU DIE.
+                    self.snake.direction = config.RIGHT
 
 
     def get_state(self):
         s = state.State(self)
         if self.verbose:
-            print "NEW STATE:"
-            print "SCORE: ", s.score
-            print "APPLE: ", s.apple
-            print "HEAD: ", s.head
-            print "TAIL: ", s.tail
-            print "BODY PARTS: ", s.body_parts
+            print("NEW STATE:")
+            print("SCORE: ", s.score)
+            print("APPLE: ", s.apple)
+            print("HEAD: ", s.head)
+            print("TAIL: ", s.tail)
+            print("BODY PARTS: ", s.body_parts)
 
 
 def get_args(arguments):
@@ -221,12 +377,75 @@ def get_args(arguments):
                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     # For generating pairs of sites
     parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
+    parser.add_argument('-an', '--ain', help='Use AI NeuralNetwork', action='store_true') #if this flag is not set, it will default to baseline
     parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
-    parser.add_argument('-h', '--history', help='Collect and Save State History', action='store_true')
+    parser.add_argument('-p', '--history', help='Collect and Save State History', action='store_true')
     args = parser.parse_args(arguments)
     return args
 
+def update(gameHistory):
+    with tf.Session() as sess:
+        if os.path.isfile(checkpoint_path + ".index"):
+            saver.restore(sess, checkpoint_path)
+        else:
+            init.run()
+            copy_online_to_target.run()
+        for X_state_val, X_action_val, rewards, X_next_state_val, continues in gameHistory:
+            step = global_step.eval()
+            if step >= n_steps:
+                break
+
+
+
+            #if iteration < training_start or iteration % training_interval != 0:
+            #    continue
+
+            # Sample memories and use the target DQN to produce the target Q-Value
+            #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
+            #    sample_memories(batch_size))
+            X_next_state_val = np.array(X_next_state_val).reshape(1,input_width)
+            X_state_val = np.array(X_state_val).reshape(1,input_width)
+            X_action_val = np.array(X_action_val).reshape(1)
+            #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
+            next_q_values = target_q_values.eval(
+                feed_dict={X_state: X_next_state_val})
+            max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
+            y_val = rewards + continues * discount_rate * max_next_q_values
+
+            # Train the online DQN
+            training_op.run(feed_dict={X_state: X_state_val,
+                                       X_action: X_action_val, ytrain: y_val})
+
+            # Regularly copy the online DQN to the target DQN
+            if step % copy_steps == 0:
+                copy_online_to_target.run()
+
+            # And save regularly
+            if step % save_steps == 0:
+                saver.save(sess, checkpoint_path)
+
+def pre_processHistory(stateHist,actionHist):
+        h = []
+        for i,s in enumerate(stateHist):
+            if i > 0:
+                reward = s.score - stateHist[i-1].score
+                newState = preprocess_observation(s)
+                oldState = preprocess_observation(stateHist[i-1])
+                action = actionHist[i-1]
+                #is this the last state of the episode? If yes, cont = 0 (cont = continue)
+                cont = 1
+                if i + 1 == len(stateHist):
+                    cont = 0
+
+                h.append((oldState,action,reward,newState,cont))
+
+        return h
+
 if __name__ == "__main__" :
     args = get_args(sys.argv[1:])
+
     theApp = App(args)
-    theApp.on_execute()
+    stateHist,actionHist = theApp.on_execute()
+    if args.history:
+        gameHistory = pre_processHistory(stateHist,actionHist)
+        update(gameHistory)
