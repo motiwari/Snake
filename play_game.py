@@ -28,9 +28,7 @@ replay_memory_size = 500000
 replay_memory = deque([], maxlen=replay_memory_size)
 
 
-eps_min = 0.1
-eps_max = 1.0
-eps_decay_steps = 2000000
+
 
 #convert game state into a feature vector
 def preprocess_observation(obs):
@@ -91,7 +89,7 @@ copy_ops = [target_var.assign(online_vars[var_name])
 copy_online_to_target = tf.group(*copy_ops)
 
 X_action = tf.placeholder(tf.int32, shape=[None])
-q_value = tf.reduce_sum(target_q_values * tf.one_hot(X_action, n_outputs),
+q_value = tf.reduce_sum(online_q_values * tf.one_hot(X_action, n_outputs),
                         axis=1, keep_dims=True)
 
 ytrain = tf.placeholder(tf.float32, shape=[None, 1])
@@ -115,19 +113,24 @@ root_logdir = "tf_logs"
 logdir = "{}/run-{}/".format(root_logdir, now)
 file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
 
-
+eps_min = 0.1
+eps_max = 1.0
+eps_decay_steps = 2000
 
 def epsilon_greedy(q_values, step):
-    epsilon = max(eps_min, eps_max - (eps_max-eps_min) * step/eps_decay_steps)
+    #print(step)
+    epsilon = eps_min
+    #epsilon = max(eps_min, eps_max - (eps_max-eps_min) * step/eps_decay_steps)
     if np.random.rand() < epsilon:
         return np.random.randint(n_outputs) # random action
     else:
+        print(q_values)
         return np.argmax(q_values) # optimal action
 
 n_steps = 4000000  # total number of training steps
 training_start = 10000  # start training after 10,000 game iterations
 training_interval = 4  # run a training step every 4 game iterations
-save_steps = 10  # save the model every 1,000 training steps
+save_steps = 1  # save the model every 1,000 training steps
 copy_steps = 1  # copy online DQN to target DQN every 10,000 training steps
 discount_rate = 0.99
 skip_start = 90  # Skip the start of every game (it's just waiting time).
@@ -332,8 +335,9 @@ class App:
                         copy_online_to_target.run()
                     step = global_step.eval()
                     q_values = online_q_values.eval(feed_dict={X_state: [features]})
+                    #print(features)
+                    #print(q_values)
                     action = epsilon_greedy(q_values, step)
-
                     #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
                 if d == config.RIGHT:
                     if action != config.LEFT:
@@ -411,6 +415,7 @@ def update(gameHistory):
         else:
             init.run()
             copy_online_to_target.run()
+
         for X_state_val, X_action_val, rewards, X_next_state_val, continues in gameHistory:
             step = global_step.eval()
             if step >= n_steps:
@@ -437,13 +442,18 @@ def update(gameHistory):
             training_op.run(feed_dict={X_state: X_state_val,
                                        X_action: X_action_val, ytrain: y_val})
 
+        #variable_check_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+                                           #scope="q_networks/online")
+        #for var in variable_check_list:
+        #    print(var)
+        #    print(var.eval())
             # Regularly copy the online DQN to the target DQN
-            if step % copy_steps == 0:
-                copy_online_to_target.run()
+        if step % copy_steps == 0:
+            copy_online_to_target.run()
 
             # And save regularly
-            if step % save_steps == 0:
-                saver.save(sess, checkpoint_path)
+        if step % save_steps == 0:
+            saver.save(sess, checkpoint_path)
 
 def pre_processHistory(stateHist,actionHist):
         h = []
