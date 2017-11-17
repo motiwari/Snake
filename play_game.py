@@ -27,9 +27,6 @@ momentum = 0.95
 replay_memory_size = 500000
 replay_memory = deque([], maxlen=replay_memory_size)
 
-
-
-
 #convert game state into a feature vector
 def preprocess_observation(obs):
     width = int(config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE)
@@ -403,19 +400,6 @@ class App:
             print("TAIL: ", s.tail)
             print("BODY PARTS: ", s.body_parts)
 
-
-def get_args(arguments):
-    parser = argparse.ArgumentParser(description=__doc__,
-                                    formatter_class=argparse.RawDescriptionHelpFormatter)
-    # For generating pairs of sites
-    parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
-    parser.add_argument('-an', '--ain', help='Use AI NeuralNetwork', action='store_true') #if this flag is not set, it will default to baseline
-    parser.add_argument('-d', '--display', help='Display the game graphically', action='store_true')
-    parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
-    parser.add_argument('-p', '--history', help='Collect and Save State History', action='store_true')
-    args = parser.parse_args(arguments)
-    return args
-
 def update(gameHistory):
     with tf.Session() as sess:
         if os.path.isfile(checkpoint_path + ".index"):
@@ -428,8 +412,6 @@ def update(gameHistory):
             step = global_step.eval()
             if step >= n_steps:
                 break
-
-
 
             #if iteration < training_start or iteration % training_interval != 0:
             #    continue
@@ -479,6 +461,18 @@ def pre_processHistory(stateHist,actionHist):
                 h.append((oldState,action,reward,newState,cont))
 
         return h
+
+def get_args(arguments):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                    formatter_class=argparse.RawDescriptionHelpFormatter)
+    # For generating pairs of sites
+    parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
+    parser.add_argument('-n', '--ain', help='Use AI NeuralNetwork', action='store_true') #if this flag is not set, it will default to baseline
+    parser.add_argument('-d', '--display', help='Display the game graphically', action='store_true')
+    parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
+    parser.add_argument('-p', '--history', help='Collect and Save State History', action='store_true')
+    args = parser.parse_args(arguments)
+    return args
 
 if __name__ == "__main__" :
     args = get_args(sys.argv[1:])
