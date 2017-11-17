@@ -12,6 +12,6 @@ class GameEngine:
         free_squares = []
         for i in range(0, config.WIDTH_TILES):
             for j in range(0, config.HEIGHT_TILES):
-                if not (config.STEP_SIZE*i in snake.x and config.STEP_SIZE*j in snake.y):
+                if not (config.STEP_SIZE*i,config.STEP_SIZE*j) in zip(snake.x, snake.y):
                     free_squares.append((config.STEP_SIZE*i,config.STEP_SIZE*j))
         return free_squares

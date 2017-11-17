@@ -54,7 +54,7 @@ class App:
     apple = None
     verbose = False
 
-    def __init__(self, args):
+    def __init__(self, args, sess):
         self._running = True
         self._display_surf = None
         self._image_surf = None
@@ -71,6 +71,7 @@ class App:
         self.history = []
         self.actionHistory = []
         self.counter = 0
+        self.sess = sess
 
     def on_init(self):
         pygame.init()
@@ -136,7 +137,7 @@ class App:
                     print("You WON Snake!!")
                     print("FINAL SCORE: ", self.snake.score)
                 self.get_state()
-                exit(0)
+                #exit(0)
             else:
                 self.apple.x, self.apple.y = random.choice(freeSqs)
         else:
@@ -155,55 +156,54 @@ class App:
         if self.on_init() == False:
             self._running = False
 
-        with tf.Session() as sess:
-            if self.usingAI and self.usingNN:
-                if os.path.isfile(cnfg.checkpoint_path + ".index"):
-                    saver.restore(sess, cnfg.checkpoint_path)
+        if self.usingAI and self.usingNN:
+            if os.path.isfile(cnfg.checkpoint_path + ".index"):
+                saver.restore(sess, cnfg.checkpoint_path)
+            else:
+                init.run()
+                copy_online_to_target.run()
+        while( self._running ):
+            pygame.event.pump()
+            keys = pygame.key.get_pressed()
+
+            if(self.usingAI):
+                if(self.usingNN):
+                    self.choose_ai_move(self.sess)
                 else:
-                    init.run()
-                    copy_online_to_target.run()
-            while( self._running ):
-                pygame.event.pump()
-                keys = pygame.key.get_pressed()
+                    self.choose_ai_move()
 
-                if(self.usingAI):
-                    if(self.usingNN):
-                        self.choose_ai_move(sess)
-                    else:
-                        self.choose_ai_move()
+            # Not using AI, Snake is player-controlled
+            else:
+                self.use_player_move(keys)
 
-                # Not using AI, Snake is player-controlled
-                else:
-                    self.use_player_move(keys)
+            if (keys[pygame.K_ESCAPE]):
+                self._running = False
 
-                if (keys[pygame.K_ESCAPE]):
-                    self._running = False
-
-                #save game STATE
-                if(self.saveHistory):
-                    if(self.history):
-                        if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
-                            self.history.append(state.State(self))
-                            # TODO: FIx and change to state's direction
-                            print(self.snake.direction)
-                            self.actionHistory.append(self.snake.direction)
-                    else:
+            #save game STATE
+            if(self.saveHistory):
+                if(self.history):
+                    if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
                         self.history.append(state.State(self))
+                        # TODO: FIx and change to state's direction
+                        print(self.snake.direction)
                         self.actionHistory.append(self.snake.direction)
+                else:
+                    self.history.append(state.State(self))
+                    self.actionHistory.append(self.snake.direction)
 
-                # Update the position and direction of snake
-                # As well as value of apple
-                self.on_loop()
+            # Update the position and direction of snake
+            # As well as value of apple
+            self.on_loop()
 
-                if args.display == True:
-                    self.on_render()
+            if args.display == True:
+                self.on_render()
 
-                # TODO: WTF is going on here?
-                self.counter += 1
-                if self.counter % 3 ==0:
-                    self.get_state()
+            # TODO: WTF is going on here?
+            self.counter += 1
+            if self.counter % 3 ==0:
+                self.get_state()
 
-                #time.sleep((100.0 - config.SPEED) / 1000.0);
+            #time.sleep((100.0 - config.SPEED) / 1000.0);
 
         #pickle.dump(self.history,open('gamehistory.pkl','wb'))
         #save game STATE
@@ -316,31 +316,35 @@ def get_args(arguments):
     parser.add_argument('-d', '--display', help='Display the game graphically', action='store_true')
     parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
     parser.add_argument('-p', '--history', help='Collect and Save State History', action='store_true')
+    parser.add_argument('-r', '--runs', help='Number of runs for training of size batch size (see config)', type=int)
     args = parser.parse_args(arguments)
     return args
 
 if __name__ == "__main__" :
     args = get_args(sys.argv[1:])
 
+    with tf.Session() as sess:
+        print(args.runs)
+        for i in range(args.runs):
+            print('i')
+            print(i)
+            theApp = App(args, sess)
+            stateHist, actionHist = theApp.on_execute()
+            #this whole block of code takes care of loading game history and training the NN
+            if args.history:
+                replay_memory_size = 50000
+                replay_memory = deque([], maxlen=replay_memory_size)
+                if os.path.isfile('./replay_memory.pkl'):
+                    replay_memory = pickle.load(open("replay_memory.pkl","rb"))
 
+                #print("replay memory")
+                #print(replay_memory)
+                print(len(replay_memory))
 
-    theApp = App(args)
-    stateHist,actionHist = theApp.on_execute()
-    #this whole block of code takes care of loading game history and training the NN
-    if args.history:
-        replay_memory_size = 50000
-        replay_memory = deque([], maxlen=replay_memory_size)
-        if os.path.isfile('./replay_memory.pkl'):
-            replay_memory = pickle.load(open("replay_memory.pkl","rb"))
-
-        #print("replay memory")
-        #print(replay_memory)
-        print(len(replay_memory))
-
-        gameHistory = pre_processHistory(stateHist,actionHist)
-        for x in gameHistory:
-            print(x)
-            print("\n")
-        replay_memory.extend(gameHistory)
-        update(replay_memory)
-        pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
+                gameHistory = pre_processHistory(stateHist,actionHist)
+                for x in gameHistory:
+                    print(x)
+                    print("\n")
+                replay_memory.extend(gameHistory)
+                update(replay_memory, sess)
+                pickle.dump(replay_memory,open('replay_memory.pkl','wb'))

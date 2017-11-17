@@ -11,28 +11,26 @@ class Head:
         self.y = y
 
 class Snake:
-    x = [0]
-    y = [0]
-    ars = []
     step = config.STEP_SIZE
 
     # The direction a snake has can change multiple times (with the pressing
     # of multiple keys) in a single timestep, which can be used to reverse
     # a snake on itself. The last_moved direction is the *actual* step it took
     # last turn.
-    direction = config.RIGHT
-    last_moved = config.RIGHT
-
-    length = None
-    score = 0
 
     isCollidable = True
-    head = None
 
-    updateCountMax = 2
-    updateCount = 0
 
     def __init__(self, length):
+        self.x = [0]
+        self.y = [0]
+        self.ars = []
+        self.direction = config.RIGHT
+        self.last_moved = config.RIGHT
+        self.score = 0
+        self.updateCountMax = 2
+        self.updateCount = 0
+
         self.length = length
         for i in range(0,2000):
             self.x.append(-100)

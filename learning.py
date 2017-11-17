@@ -15,57 +15,56 @@ def sample_memories(replay_memory,batch_size):
     return (cols[0], cols[1], cols[2].reshape(-1, 1), cols[3],
             cols[4].reshape(-1, 1))
 
-def update(gameHistory):
+def update(gameHistory, sess):
     # TODO: Reloading is very slow
-    with tf.Session() as sess:
-        if os.path.isfile(cnfg.checkpoint_path + ".index"):
-            saver.restore(sess, cnfg.checkpoint_path)
-        else:
-            init.run()
-            copy_online_to_target.run()
-        step = global_step.eval()
-        X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
+    if os.path.isfile(cnfg.checkpoint_path + ".index"):
+        saver.restore(sess, cnfg.checkpoint_path)
+    else:
+        init.run()
+        copy_online_to_target.run()
+    step = global_step.eval()
+    X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
 
-        #if len(gameHistory) < 100: #or iteration % training_interval != 0:
-        #   return
+    #if len(gameHistory) < 100: #or iteration % training_interval != 0:
+    #   return
 
-        # Sample memories and use the target DQN to produce the target Q-Value
-        #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
-        #    sample_memories(batch_size))
-        #X_next_state_val = np.array(X_next_state_val).reshape(1,cnfg.input_width)
-        #X_state_val = np.array(X_state_val).reshape(1,cnfg.input_width)
-        #X_action_val = np.array(X_action_val).reshape(1)
-        #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
-        next_q_values = online_q_values.eval(
-            feed_dict={X_state: X_next_state_val})
-        max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
-        y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
+    # Sample memories and use the target DQN to produce the target Q-Value
+    #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
+    #    sample_memories(batch_size))
+    #X_next_state_val = np.array(X_next_state_val).reshape(1,cnfg.input_width)
+    #X_state_val = np.array(X_state_val).reshape(1,cnfg.input_width)
+    #X_action_val = np.array(X_action_val).reshape(1)
+    #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
+    next_q_values = online_q_values.eval(
+        feed_dict={X_state: X_next_state_val})
+    max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
+    y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
 
-        #for a,b,c,d in zip(y_val,X_state_val,X_action_val,continues):
-        #    print(a)
-        #    print(b)
-        #    print(c)
-        #    print(d)
-        #    print('\n')
-        # Train the online DQN
-        #for i in range(300):
-        q_values = online_q_values.eval(feed_dict={X_state: X_state_val})
-            #print(q_values)
-        training_op.run(feed_dict={X_state: X_state_val,
-                                   X_action: X_action_val, ytrain: y_val})
+    #for a,b,c,d in zip(y_val,X_state_val,X_action_val,continues):
+    #    print(a)
+    #    print(b)
+    #    print(c)
+    #    print(d)
+    #    print('\n')
+    # Train the online DQN
+    #for i in range(300):
+    q_values = online_q_values.eval(feed_dict={X_state: X_state_val})
+        #print(q_values)
+    training_op.run(feed_dict={X_state: X_state_val,
+                               X_action: X_action_val, ytrain: y_val})
 
-        #variable_check_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
-                                           #scope="q_networks/online")
-        #for var in variable_check_list:
-        #    print(var)
-        #    print(var.eval())
-        # Regularly copy the online DQN to the target DQN
-        if step % cnfg.copy_steps == 0:
-            copy_online_to_target.run()
+    #variable_check_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
+                                       #scope="q_networks/online")
+    #for var in variable_check_list:
+    #    print(var)
+    #    print(var.eval())
+    # Regularly copy the online DQN to the target DQN
+    if step % cnfg.copy_steps == 0:
+        copy_online_to_target.run()
 
-        # And save regularly
-        if step % cnfg.save_steps == 0:
-            saver.save(sess, cnfg.checkpoint_path)
+    # And save regularly
+    if step % cnfg.save_steps == 0:
+        saver.save(sess, cnfg.checkpoint_path)
 
 def pre_processHistory(stateHist,actionHist):
         h = []
@@ -143,6 +142,7 @@ def epsilon_greedy(q_values, step):
         return np.random.randint(cnfg.n_outputs) # random action
     else:
         return np.argmax(q_values) # optimal action
+
 
 cnfg.hidden_activation = tf.nn.relu
 initializer = tf.contrib.layers.variance_scaling_initializer()
