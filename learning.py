@@ -4,7 +4,6 @@ import numpy as np
 import os
 from datetime import datetime
 
-
 def sample_memories(replay_memory,batch_size):
     indices = np.random.permutation(len(replay_memory))[:batch_size]
     cols = [[], [], [], [], []] # state, action, reward, next_state, continue
@@ -136,6 +135,15 @@ def q_network(X_state, name):
                               for var in trainable_vars}
     return outputs, trainable_vars_by_name
 
+def epsilon_greedy(q_values, step):
+    #print(step)
+    epsilon = cnfg.eps_min
+    #epsilon = max(cnfg.eps_min, cnfg.eps_max - (cnfg.eps_max-cnfg.eps_min) * step/cnfg.eps_decay_steps)
+    if np.random.rand() < epsilon:
+        return np.random.randint(cnfg.n_outputs) # random action
+    else:
+        return np.argmax(q_values) # optimal action
+
 cnfg.hidden_activation = tf.nn.relu
 initializer = tf.contrib.layers.variance_scaling_initializer()
 X_state = tf.placeholder(tf.float32, shape=[None, cnfg.input_width])
@@ -162,19 +170,11 @@ optimizer = tf.train.MomentumOptimizer(cnfg.learning_rate, cnfg.momentum)
 training_op = optimizer.minimize(loss, global_step=global_step)
 
 init = tf.global_variables_initializer()
+
 saver = tf.train.Saver()
 
 # The next few lines are there for the purpose of being able to view things on tensorboard
-now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-root_logdir = "tf_logs"
-logdir = "{}/run-{}/".format(root_logdir, now)
-file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
-
-def epsilon_greedy(q_values, step):
-    #print(step)
-    epsilon = cnfg.eps_min
-    #epsilon = max(cnfg.eps_min, cnfg.eps_max - (cnfg.eps_max-cnfg.eps_min) * step/cnfg.eps_decay_steps)
-    if np.random.rand() < epsilon:
-        return np.random.randint(cnfg.n_outputs) # random action
-    else:
-        return np.argmax(q_values) # optimal action
+# now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+# root_logdir = "tf_logs"
+# logdir = "{}/run-{}/".format(root_logdir, now)
+# file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
