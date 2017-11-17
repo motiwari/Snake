@@ -6,7 +6,7 @@ class Apple:
     image = None
     isCollidable = True
     value = config.INITIAL_APPLE_VALUE
-    discountFactor = config.DEFAULT_DISCOUNT_FACTOR
+    discountFactor = config.DISCOUNT_FACTOR
 
     def __init__(self, x, y):
         self.x = x * config.STEP_SIZE

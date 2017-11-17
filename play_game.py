@@ -46,8 +46,8 @@ def isNextMoveCollision(pyg, direction):
     return False
 
 class App:
-    windowWidth = config.DEFAULT_WINDOW_WIDTH
-    windowHeight = config.DEFAULT_WINDOW_HEIGHT
+    windowWidth = config.WINDOW_WIDTH
+    windowHeight = config.WINDOW_HEIGHT
     boardWidth = windowWidth/config.STEP_SIZE
     boardHeight = windowHeight/config.STEP_SIZE
     snake = None

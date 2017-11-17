@@ -1,11 +1,13 @@
-import config
+import config as cnfg
 import tensorflow as tf
 import numpy as np
 import os
+from datetime import datetime
+
 
 def sample_memories(replay_memory,batch_size):
     indices = np.random.permutation(len(replay_memory))[:batch_size]
-    cols = [[], [], [], [], []] # state, action, reward, next_state, continue
+    cols = [[]] * 5 # state, action, reward, next_state, continue
     for idx in indices:
         memory = replay_memory[idx]
         for col, value in zip(cols, memory):
@@ -15,14 +17,15 @@ def sample_memories(replay_memory,batch_size):
             cols[4].reshape(-1, 1))
 
 def update(gameHistory):
+    # TODO: Reloading is very slow
     with tf.Session() as sess:
-        if os.path.isfile(checkpoint_path + ".index"):
-            saver.restore(sess, checkpoint_path)
+        if os.path.isfile(cnfg.checkpoint_path + ".index"):
+            saver.restore(sess, cnfg.checkpoint_path)
         else:
             init.run()
             copy_online_to_target.run()
         step = global_step.eval()
-        X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,batch_size)
+        X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
 
         #if len(gameHistory) < 100: #or iteration % training_interval != 0:
         #   return
@@ -37,7 +40,7 @@ def update(gameHistory):
         next_q_values = online_q_values.eval(
             feed_dict={X_state: X_next_state_val})
         max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
-        y_val = rewards + continues * discount_rate * max_next_q_values
+        y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
 
         #for a,b,c,d in zip(y_val,X_state_val,X_action_val,continues):
         #    print(a)
@@ -57,13 +60,13 @@ def update(gameHistory):
         #for var in variable_check_list:
         #    print(var)
         #    print(var.eval())
-            # Regularly copy the online DQN to the target DQN
-        if step % copy_steps == 0:
+        # Regularly copy the online DQN to the target DQN
+        if step % cnfg.copy_steps == 0:
             copy_online_to_target.run()
 
-            # And save regularly
-        if step % save_steps == 0:
-            saver.save(sess, checkpoint_path)
+        # And save regularly
+        if step % cnfg.save_steps == 0:
+            saver.save(sess, cnfg.checkpoint_path)
 
 def pre_processHistory(stateHist,actionHist):
         h = []
@@ -82,8 +85,8 @@ def pre_processHistory(stateHist,actionHist):
 
         return h
 
-gwidth = config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE
-gheight = config.DEFAULT_WINDOW_HEIGHT/config.STEP_SIZE
+gwidth = WIDTH_TILES
+gheight = HEIGHT_TILES
 n_hidden = 20
 input_width = int(gwidth * gheight * 3)
 hidden_activation = None
@@ -92,49 +95,37 @@ n_outputs = 4  # 4 discrete actions are available
 learning_rate = 0.001
 momentum = 0.9
 
-
 #convert game state into a feature vector
 def preprocess_observation(obs):
-    width = int(config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE)
-    height = int(config.DEFAULT_WINDOW_HEIGHT/config.STEP_SIZE)
+    # Add indicators at each coordinate for apple
+    a = [0] * WIDTH_TILES * HEIGHT_TILES
+    apple_x = int(obs.apple[0])
+    apple_y = int(obs.apple[1])
+    a[width * apple_y + apple_x] = 1
 
-    #add indicators at each coordinate for apple
-    a = [0] * width * height
-    xa = int(obs.apple[0])
-    ya = int(obs.apple[1])
-    a[width * ya + xa] = 1
+    # Add indicators for head
+    h = [0] * WIDTH_TILES * HEIGHT_TILES
 
-    #add indicators at each coordinate for snake
-    b =  [0] * width * height
+    head_x = obs.head[0]
+    head_y = obs.head[1]
+    # If statement to account for when head goes off board
+    if head_x >= 0 and head_y >= 0 and head_x <width and head_y < height:
+        h[int(WIDTH_TILES * head_y + head_x)] = 1
 
-    x = obs.head[0]
-    y = obs.head[1]
-    #if statement to account for when head goes off board
-    if x >= 0 and y >= 0 and x <width and y < height:
-        b[int(width * y + x)] = 1
+    # Tail
+    t = [0] * width * height
+    tail_x = obs.tail[0]
+    tail_y = obs.tail[1]
+    t[int(WIDTH_TILES * tail_y + tail_x)] = 1
 
-    x = obs.tail[0]
-    y = obs.tail[1]
-    #if statement to account for when head goes off board
-    if x >= 0 and y >= 0 and x <width and y < height:
-        b[int(width * y + x)] = 1
-
+    # Add indicators for each body part
+    b = [0] * width * height
     for w in obs.body_parts:
-        x = w[0]
-        y = w[1]
-        if x >= 0 and y >= 0 and x <width and y < height:
-            b[int(width * y + x)] = 1
+        body_x = w[0]
+        body_y = w[1]
+        b[int(WIDTH_TILES * body_y + body_x)] = 1
 
-    #need an extra set of parameters for head location so game can figure out
-    #where head actually is
-
-    c = [0] * width * height
-    x = obs.head[0]
-    y = obs.head[1]
-    #if statement to account for when head goes off board
-    if x >= 0 and y >= 0 and x <width and y < height:
-        c[int(width * y + x)] = 1
-    return np.array(a + b + c)
+    return np.array(a + h + t + b)
 
 def q_network(X_state, name):
     prev_layer = X_state
@@ -178,8 +169,6 @@ training_op = optimizer.minimize(loss, global_step=global_step)
 init = tf.global_variables_initializer()
 saver = tf.train.Saver()
 
-from datetime import datetime
-
 #The next few lines are there for the purpose of being able to view things on tensorboard
 now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
 root_logdir = "tf_logs"
@@ -198,15 +187,3 @@ def epsilon_greedy(q_values, step):
         return np.random.randint(n_outputs) # random action
     else:
         return np.argmax(q_values) # optimal action
-
-n_steps = 4000000  # total number of training steps
-training_start = 10000  # start training after 10,000 game iterations
-training_interval = 4  # run a training step every 4 game iterations
-save_steps = 1  # save the model every 1,000 training steps
-copy_steps = 1  # copy online DQN to target DQN every 10,000 training steps
-discount_rate = 0.99
-skip_start = 90  # Skip the start of every game (it's just waiting time).
-batch_size = 20
-iteration = 0  # game iterations
-checkpoint_path = "./my_dqn.ckpt"
-done = True # env needs to be reset
