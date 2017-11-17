@@ -217,9 +217,10 @@ class App:
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
             if self.gameEngine.isCollision(self.snake.head, dummy_head):
                 self.snake.addActionAndReward(self.snake.direction, 0)
-                print("You lose! Collision: ")
-                print("FINAL SCORE: ", self.snake.score)
-                print(self.snake.ars)
+                if self.verbose:
+                    print("You lose! Collision: ")
+                    print("FINAL SCORE: ", self.snake.score)
+                    print(self.snake.ars)
                 self.get_state()
                 self._running = False
                 #exit(0)
@@ -227,9 +228,10 @@ class App:
         if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
             self.snake.head.y < 0 or self.snake.head.y >= self.windowHeight:
             self.snake.addActionAndReward(self.snake.direction, 0)
-            print("You lose! Off the board!")
-            print("FINAL SCORE: ", self.snake.score)
-            print(self.snake.ars)
+            if self.verbose:
+                print("You lose! Off the board!")
+                print("FINAL SCORE: ", self.snake.score)
+                print(self.snake.ars)
             self.get_state()
             self._running = False
             #exit(0)
@@ -238,13 +240,15 @@ class App:
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.snake.length = self.snake.length + 1
             self.snake.score += self.apple.value
-            print("Ate apple with value ", self.apple.value)
+            if self.verbose:
+                print("Ate apple with value ", self.apple.value)
             self.snake.addActionAndReward(self.snake.direction, self.apple.value)
             self.apple.value = 100
             freeSqs = self.gameEngine.getBoardFreeSquares(self.snake)
             if freeSqs == []:
-                print("You WON Snake!!")
-                print("FINAL SCORE: ", self.snake.score)
+                if self.verbose:
+                    print("You WON Snake!!")
+                    print("FINAL SCORE: ", self.snake.score)
                 self.get_state()
                 exit(0)
             else:
