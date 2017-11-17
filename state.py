@@ -9,12 +9,14 @@ class State:
     snake = None
     monster = None
     score = 0
+    action = None
 
     def __init__(self, App):
         self.snake = App.snake
         self.apple = (App.apple.x/config.STEP_SIZE, App.apple.y/config.STEP_SIZE)
         self.score = self.snake.score
         self.head = (self.snake.head.x/config.STEP_SIZE, self.snake.head.y/config.STEP_SIZE)
+        self.action = self.snake.direction
 
         self.body_parts = []
         # Don't include head or tail
