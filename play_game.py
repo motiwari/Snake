@@ -308,7 +308,8 @@ class App:
                     self._running = False
 
                 self.on_loop()
-                self.on_render()
+                if args.display == True:
+                    self.on_render()
                 self.counter += 1
                 # TODO: WTF is going on here?
                 if self.counter % 3 ==0:
@@ -320,6 +321,7 @@ class App:
                 if(self.saveHistory):
                     if(self.history):
                         if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
+                            print(state.State(self))
                             self.history.append(state.State(self))
                             self.actionHistory.append(self.snake.direction)
                     else:
