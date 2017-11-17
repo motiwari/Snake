@@ -98,32 +98,32 @@ momentum = 0.9
 #convert game state into a feature vector
 def preprocess_observation(obs):
     # Add indicators at each coordinate for apple
-    a = [0] * WIDTH_TILES * HEIGHT_TILES
+    a = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
     apple_x = int(obs.apple[0])
     apple_y = int(obs.apple[1])
     a[width * apple_y + apple_x] = 1
 
     # Add indicators for head
-    h = [0] * WIDTH_TILES * HEIGHT_TILES
+    h = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
 
     head_x = obs.head[0]
     head_y = obs.head[1]
     # If statement to account for when head goes off board
     if head_x >= 0 and head_y >= 0 and head_x <width and head_y < height:
-        h[int(WIDTH_TILES * head_y + head_x)] = 1
+        h[int(cnfg.WIDTH_TILES * head_y + head_x)] = 1
 
     # Tail
-    t = [0] * width * height
+    t = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
     tail_x = obs.tail[0]
     tail_y = obs.tail[1]
-    t[int(WIDTH_TILES * tail_y + tail_x)] = 1
+    t[int(cnfg.WIDTH_TILES * tail_y + tail_x)] = 1
 
     # Add indicators for each body part
-    b = [0] * width * height
+    b = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
     for w in obs.body_parts:
         body_x = w[0]
         body_y = w[1]
-        b[int(WIDTH_TILES * body_y + body_x)] = 1
+        b[int(cnfg.WIDTH_TILES * body_y + body_x)] = 1
 
     return np.array(a + h + t + b)
 
