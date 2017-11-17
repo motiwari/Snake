@@ -13,11 +13,6 @@ class Head:
 class Snake:
     step = config.STEP_SIZE
 
-    # The direction a snake has can change multiple times (with the pressing
-    # of multiple keys) in a single timestep, which can be used to reverse
-    # a snake on itself. The last_moved direction is the *actual* step it took
-    # last turn.
-
     isCollidable = True
 
 
@@ -26,6 +21,11 @@ class Snake:
         self.y = [0]
         self.ars = []
         self.direction = config.RIGHT
+        # The direction a snake has can change multiple times (with the pressing
+        # of multiple keys) in a single timestep, which can be used to reverse
+        # a snake on itself. The last_moved direction is the *actual* step it took
+        # last turn.
+
         self.last_moved = config.RIGHT
         self.score = 0
         self.updateCountMax = 2
