@@ -26,7 +26,7 @@ batch_size = 20
 checkpoint_path = "./my_dqn.ckpt"
 
 n_hidden = 20
-input_width = int(cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES * 4)
+input_width = int(WIDTH_TILES * HEIGHT_TILES * 4)
 hidden_activation = None
 n_outputs = 4  # 4 discrete actions are available
 learning_rate = 0.001
