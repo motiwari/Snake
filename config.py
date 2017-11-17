@@ -17,7 +17,6 @@ LEFT = 1
 UP = 2
 DOWN = 3
 
-
 # For tensorflow parameters
 save_steps = 1  # save the model every 1,000 training steps
 copy_steps = 1  # copy online DQN to target DQN every 10,000 training steps

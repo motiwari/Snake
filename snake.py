@@ -1,8 +1,6 @@
 import config
 
 class Head:
-    x = 0
-    y = 0
     isCollidable = True
 
 

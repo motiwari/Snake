@@ -50,10 +50,7 @@ class App:
     windowHeight = config.WINDOW_HEIGHT
     boardWidth = windowWidth/config.STEP_SIZE
     boardHeight = windowHeight/config.STEP_SIZE
-    snake = None
-    apple = None
-    verbose = False
-
+    
     def __init__(self, args, sess):
         self._running = True
         self._display_surf = None

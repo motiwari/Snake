@@ -1,11 +1,7 @@
 import config
 
 class Apple:
-    x = 0
-    y = 0
-    image = None
     isCollidable = True
-    value = config.INITIAL_APPLE_VALUE
     discountFactor = config.DISCOUNT_FACTOR
 
     def __init__(self, x, y):
