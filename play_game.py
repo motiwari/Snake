@@ -18,14 +18,13 @@ import os
 gwidth = config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE
 gheight = config.DEFAULT_WINDOW_HEIGHT/config.STEP_SIZE
 n_hidden = 20
-input_width = int(gwidth * gheight * 2)
+input_width = int(gwidth * gheight * 3)
 hidden_activation = None
 n_outputs = 4  # 4 discrete actions are available
 
 learning_rate = 0.001
-momentum = 0.95
-replay_memory_size = 500000
-replay_memory = deque([], maxlen=replay_memory_size)
+momentum = 0.9
+
 
 
 
@@ -62,7 +61,16 @@ def preprocess_observation(obs):
         if x >= 0 and y >= 0 and x <width and y < height:
             b[int(width * y + x)] = 1
 
-    return np.array(a + b)
+    #need an extra set of parameters for head location so game can figure out
+    #where head actually is
+
+    c = [0] * width * height
+    x = obs.head[0]
+    y = obs.head[1]
+    #if statement to account for when head goes off board
+    if x >= 0 and y >= 0 and x <width and y < height:
+        c[int(width * y + x)] = 1
+    return np.array(a + b + c)
 
 def q_network(X_state, name):
     prev_layer = X_state
@@ -99,7 +107,8 @@ linear_error = 2 * (error - clipped_error)
 loss = tf.reduce_mean(tf.square(clipped_error) + linear_error)
 
 global_step = tf.Variable(0, trainable=False, name='global_step')
-optimizer = tf.train.MomentumOptimizer(learning_rate, momentum, use_nesterov=True)
+#optimizer = tf.train.MomentumOptimizer(learning_rate, momentum, use_nesterov=True)
+optimizer = tf.train.MomentumOptimizer(learning_rate, momentum)
 training_op = optimizer.minimize(loss, global_step=global_step)
 
 init = tf.global_variables_initializer()
@@ -124,7 +133,6 @@ def epsilon_greedy(q_values, step):
     if np.random.rand() < epsilon:
         return np.random.randint(n_outputs) # random action
     else:
-        print(q_values)
         return np.argmax(q_values) # optimal action
 
 n_steps = 4000000  # total number of training steps
@@ -134,7 +142,7 @@ save_steps = 1  # save the model every 1,000 training steps
 copy_steps = 1  # copy online DQN to target DQN every 10,000 training steps
 discount_rate = 0.99
 skip_start = 90  # Skip the start of every game (it's just waiting time).
-batch_size = 50
+batch_size = 20
 iteration = 0  # game iterations
 checkpoint_path = "./my_dqn.ckpt"
 done = True # env needs to be reset
@@ -216,24 +224,31 @@ class App:
             # Fix this
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
             if self.gameEngine.isCollision(self.snake.head, dummy_head):
+                self.snake.score -= 100
                 self.snake.addActionAndReward(self.snake.direction, 0)
                 print("You lose! Collision: ")
                 print("FINAL SCORE: ", self.snake.score)
                 print(self.snake.ars)
                 self.get_state()
                 self._running = False
+                return
                 #exit(0)
 
         if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
             self.snake.head.y < 0 or self.snake.head.y >= self.windowHeight:
+            #punish the player for running into itself
+            self.snake.score -= 100
             self.snake.addActionAndReward(self.snake.direction, 0)
             print("You lose! Off the board!")
             print("FINAL SCORE: ", self.snake.score)
             print(self.snake.ars)
             self.get_state()
             self._running = False
+            return
             #exit(0)
 
+        #reward the player for surviving longer
+        self.snake.score += 1
         # Does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.snake.length = self.snake.length + 1
@@ -265,39 +280,48 @@ class App:
         if self.on_init() == False:
             self._running = False
 
+        with tf.Session() as sess:
+            if self.usingAI and self.usingNN:
+                if os.path.isfile(checkpoint_path + ".index"):
+                    saver.restore(sess, checkpoint_path)
+                else:
+                    init.run()
+                    copy_online_to_target.run()
+            while( self._running ):
+                pygame.event.pump()
+                keys = pygame.key.get_pressed()
 
-        while( self._running ):
-            pygame.event.pump()
-            keys = pygame.key.get_pressed()
+                if(self.usingAI):
+                    if(self.usingNN):
+                        self.choose_ai_move(sess)
+                    else:
+                        self.choose_ai_move()
 
-            if(self.usingAI):
-                self.choose_ai_move()
+                # Not using AI, Snake is player-controlled
+                else:
+                    self.use_player_move(keys)
 
-            # Not using AI, Snake is player-controlled
-            else:
-                self.use_player_move(keys)
+                if (keys[pygame.K_ESCAPE]):
+                    self._running = False
 
-            if (keys[pygame.K_ESCAPE]):
-                self._running = False
+                self.on_loop()
+                self.on_render()
+                self.counter += 1
+                # TODO: WTF is going on here?
+                if self.counter % 3 ==0:
+                    self.get_state()
 
-            self.on_loop()
-            self.on_render()
-            self.counter += 1
-            # TODO: WTF is going on here?
-            if self.counter % 3 ==0:
-                self.get_state()
+                time.sleep((100.0 - config.SPEED) / 1000.0);
 
-            #time.sleep((100.0 - config.SPEED) / 1000.0);
-
-            #save game STATE
-            if(self.saveHistory):
-                if(self.history):
-                    if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
+                #save game STATE
+                if(self.saveHistory):
+                    if(self.history):
+                        if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
+                            self.history.append(state.State(self))
+                            self.actionHistory.append(self.snake.direction)
+                    else:
                         self.history.append(state.State(self))
                         self.actionHistory.append(self.snake.direction)
-                else:
-                    self.history.append(state.State(self))
-                    self.actionHistory.append(self.snake.direction)
 
 
         #pickle.dump(self.history,open('gamehistory.pkl','wb'))
@@ -316,7 +340,7 @@ class App:
         if keys[pygame.K_UP] and self.snake.last_moved != config.DOWN:
             self.snake.moveUp()
 
-    def choose_ai_move(self):
+    def choose_ai_move(self,sess = None):
         x = self.snake.x[0]
         y = self.snake.y[0]
         d = self.snake.last_moved
@@ -327,18 +351,14 @@ class App:
                 s = state.State(self)
                 features = preprocess_observation(s)
                 action = 0
-                with tf.Session() as sess:
-                    if os.path.isfile(checkpoint_path + ".index"):
-                            saver.restore(sess, checkpoint_path)
-                    else:
-                        init.run()
-                        copy_online_to_target.run()
-                    step = global_step.eval()
-                    q_values = online_q_values.eval(feed_dict={X_state: [features]})
-                    #print(features)
-                    #print(q_values)
-                    action = epsilon_greedy(q_values, step)
+                #with tf.Session() as sess:
+                step = global_step.eval()
+                q_values = online_q_values.eval(feed_dict={X_state: [features]})
+                #print(features)
+                print(q_values)
+                action = epsilon_greedy(q_values, step)
                     #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
+                print(action)
                 if d == config.RIGHT:
                     if action != config.LEFT:
                         self.snake.direction = action
@@ -408,6 +428,17 @@ def get_args(arguments):
     args = parser.parse_args(arguments)
     return args
 
+def sample_memories(replay_memory,batch_size):
+    indices = np.random.permutation(len(replay_memory))[:batch_size]
+    cols = [[], [], [], [], []] # state, action, reward, next_state, continue
+    for idx in indices:
+        memory = replay_memory[idx]
+        for col, value in zip(cols, memory):
+            col.append(value)
+    cols = [np.array(col) for col in cols]
+    return (cols[0], cols[1], cols[2].reshape(-1, 1), cols[3],
+            cols[4].reshape(-1, 1))
+
 def update(gameHistory):
     with tf.Session() as sess:
         if os.path.isfile(checkpoint_path + ".index"):
@@ -415,32 +446,39 @@ def update(gameHistory):
         else:
             init.run()
             copy_online_to_target.run()
-
-        for X_state_val, X_action_val, rewards, X_next_state_val, continues in gameHistory:
-            step = global_step.eval()
-            if step >= n_steps:
-                break
+        step = global_step.eval()
+        X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,batch_size)
 
 
 
-            #if iteration < training_start or iteration % training_interval != 0:
-            #    continue
 
-            # Sample memories and use the target DQN to produce the target Q-Value
-            #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
-            #    sample_memories(batch_size))
-            X_next_state_val = np.array(X_next_state_val).reshape(1,input_width)
-            X_state_val = np.array(X_state_val).reshape(1,input_width)
-            X_action_val = np.array(X_action_val).reshape(1)
-            #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
-            next_q_values = target_q_values.eval(
-                feed_dict={X_state: X_next_state_val})
-            max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
-            y_val = rewards + continues * discount_rate * max_next_q_values
+        #if len(gameHistory) < 100: #or iteration % training_interval != 0:
+        #   return
 
-            # Train the online DQN
-            training_op.run(feed_dict={X_state: X_state_val,
-                                       X_action: X_action_val, ytrain: y_val})
+        # Sample memories and use the target DQN to produce the target Q-Value
+        #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
+        #    sample_memories(batch_size))
+        #X_next_state_val = np.array(X_next_state_val).reshape(1,input_width)
+        #X_state_val = np.array(X_state_val).reshape(1,input_width)
+        #X_action_val = np.array(X_action_val).reshape(1)
+        #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
+        next_q_values = online_q_values.eval(
+            feed_dict={X_state: X_next_state_val})
+        max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
+        y_val = rewards + continues * discount_rate * max_next_q_values
+
+        #for a,b,c,d in zip(y_val,X_state_val,X_action_val,continues):
+        #    print(a)
+        #    print(b)
+        #    print(c)
+        #    print(d)
+        #    print('\n')
+        # Train the online DQN
+        #for i in range(300):
+        q_values = online_q_values.eval(feed_dict={X_state: X_state_val})
+            #print(q_values)
+        training_op.run(feed_dict={X_state: X_state_val,
+                                   X_action: X_action_val, ytrain: y_val})
 
         #variable_check_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                            #scope="q_networks/online")
@@ -475,8 +513,25 @@ def pre_processHistory(stateHist,actionHist):
 if __name__ == "__main__" :
     args = get_args(sys.argv[1:])
 
+
+
     theApp = App(args)
     stateHist,actionHist = theApp.on_execute()
+    #this whole block of code takes care of loading game history and training the NN
     if args.history:
+        replay_memory_size = 50000
+        replay_memory = deque([], maxlen=replay_memory_size)
+        if os.path.isfile('./replay_memory.pkl'):
+            replay_memory = pickle.load(open("replay_memory.pkl","rb"))
+
+        #print("replay memory")
+        #print(replay_memory)
+        print(len(replay_memory))
+
         gameHistory = pre_processHistory(stateHist,actionHist)
-        update(gameHistory)
+        for x in gameHistory:
+            print(x)
+            print("\n")
+        replay_memory.extend(gameHistory)
+        update(replay_memory)
+        pickle.dump(replay_memory,open('replay_memory.pkl','wb'))

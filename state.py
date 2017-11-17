@@ -25,11 +25,12 @@ class State:
         self.tail = (self.snake.x[n]/config.STEP_SIZE, self.snake.y[n]/config.STEP_SIZE)
 
     def __eq__(self, other):
-        if self.apple != other.apple:
-            return False
-
-        if self.score != other.score:
-            return False
+        #can't compare apple until the bug of repeating states is fixed
+        #if self.apple != other.apple:
+        #    return False
+        #can't compare these two until the bug in the game is fixed
+        #if self.score != other.score:
+        #    return False
 
         if self.snake.length != other.snake.length:
             return False
