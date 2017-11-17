@@ -157,8 +157,8 @@ class App:
 
         with tf.Session() as sess:
             if self.usingAI and self.usingNN:
-                if os.path.isfile(checkpoint_path + ".index"):
-                    saver.restore(sess, checkpoint_path)
+                if os.path.isfile(cnfg.checkpoint_path + ".index"):
+                    saver.restore(sess, cnfg.checkpoint_path)
                 else:
                     init.run()
                     copy_online_to_target.run()

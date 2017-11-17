@@ -7,7 +7,7 @@ from datetime import datetime
 
 def sample_memories(replay_memory,batch_size):
     indices = np.random.permutation(len(replay_memory))[:batch_size]
-    cols = [[]] * 5 # state, action, reward, next_state, continue
+    cols = [[], [], [], [], []] # state, action, reward, next_state, continue
     for idx in indices:
         memory = replay_memory[idx]
         for col, value in zip(cols, memory):
@@ -92,7 +92,7 @@ def preprocess_observation(obs):
     a = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
     apple_x = int(obs.apple[0])
     apple_y = int(obs.apple[1])
-    a[width * apple_y + apple_x] = 1
+    a[cnfg.WIDTH_TILES * apple_y + apple_x] = 1
 
     # Add indicators for head
     h = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
@@ -100,21 +100,25 @@ def preprocess_observation(obs):
     head_x = obs.head[0]
     head_y = obs.head[1]
     # If statement to account for when head goes off board
-    if head_x >= 0 and head_y >= 0 and head_x < width and head_y < height:
+    if head_x >= 0 and head_y >= 0 and head_x < cnfg.WIDTH_TILES and head_y < cnfg.HEIGHT_TILES:
         h[int(cnfg.WIDTH_TILES * head_y + head_x)] = 1
 
     # Tail
     t = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
     tail_x = obs.tail[0]
     tail_y = obs.tail[1]
-    t[int(cnfg.WIDTH_TILES * tail_y + tail_x)] = 1
+    # Tail starts off the board
+    if tail_x >= 0 and tail_y >= 0 and tail_x < cnfg.WIDTH_TILES and tail_y < cnfg.HEIGHT_TILES:
+        t[int(cnfg.WIDTH_TILES * tail_y + tail_x)] = 1
 
     # Add indicators for each body part
     b = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
     for w in obs.body_parts:
         body_x = w[0]
         body_y = w[1]
-        b[int(cnfg.WIDTH_TILES * body_y + body_x)] = 1
+        # Tail starts off the board
+        if body_x >= 0 and body_y >= 0 and body_x < cnfg.WIDTH_TILES and body_y < cnfg.HEIGHT_TILES:
+            b[int(cnfg.WIDTH_TILES * body_y + body_x)] = 1
 
     return np.array(a + h + t + b)
 
