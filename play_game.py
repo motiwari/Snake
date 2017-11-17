@@ -26,9 +26,6 @@ learning_rate = 0.001
 momentum = 0.9
 
 
-
-
-
 #convert game state into a feature vector
 def preprocess_observation(obs):
     width = int(config.DEFAULT_WINDOW_WIDTH/config.STEP_SIZE)
@@ -197,6 +194,7 @@ class App:
         self.usingAI = args.ai
         self.usingNN = args.ain
         self.verbose = args.verbose
+        self.display = args.display
         self.saveHistory = args.history
         self.history = []
         self.actionHistory = []
@@ -204,12 +202,13 @@ class App:
 
     def on_init(self):
         pygame.init()
-        self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
+        if self.display == True:
+            self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
 
-        pygame.display.set_caption('SNAKE - motiwari, rschoenh, benzhou')
-        self._running = True
-        self._image_surf = pygame.image.load("pygame.png").convert()
-        self._apple_surf = pygame.image.load("block.png").convert()
+            pygame.display.set_caption('SNAKE - motiwari, rschoenh, benzhou')
+            self._running = True
+            self._image_surf = pygame.image.load("pygame.png").convert()
+            self._apple_surf = pygame.image.load("block.png").convert()
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -226,9 +225,10 @@ class App:
             if self.gameEngine.isCollision(self.snake.head, dummy_head):
                 self.snake.score -= 100
                 self.snake.addActionAndReward(self.snake.direction, 0)
-                print("You lose! Collision: ")
-                print("FINAL SCORE: ", self.snake.score)
-                print(self.snake.ars)
+                if self.verbose:
+                    print("You lose! Collision: ")
+                    print("FINAL SCORE: ", self.snake.score)
+                    print(self.snake.ars)
                 self.get_state()
                 self._running = False
                 return
@@ -239,9 +239,10 @@ class App:
             #punish the player for running into itself
             self.snake.score -= 100
             self.snake.addActionAndReward(self.snake.direction, 0)
-            print("You lose! Off the board!")
-            print("FINAL SCORE: ", self.snake.score)
-            print(self.snake.ars)
+            if self.verbose:
+                print("You lose! Off the board!")
+                print("FINAL SCORE: ", self.snake.score)
+                print(self.snake.ars)
             self.get_state()
             self._running = False
             return
@@ -253,13 +254,15 @@ class App:
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.snake.length = self.snake.length + 1
             self.snake.score += self.apple.value
-            print("Ate apple with value ", self.apple.value)
+            if self.verbose:
+                print("Ate apple with value ", self.apple.value)
             self.snake.addActionAndReward(self.snake.direction, self.apple.value)
             self.apple.value = 100
             freeSqs = self.gameEngine.getBoardFreeSquares(self.snake)
             if freeSqs == []:
-                print("You WON Snake!!")
-                print("FINAL SCORE: ", self.snake.score)
+                if self.verbose:
+                    print("You WON Snake!!")
+                    print("FINAL SCORE: ", self.snake.score)
                 self.get_state()
                 exit(0)
             else:
@@ -417,16 +420,6 @@ class App:
             print("BODY PARTS: ", s.body_parts)
 
 
-def get_args(arguments):
-    parser = argparse.ArgumentParser(description=__doc__,
-                                    formatter_class=argparse.RawDescriptionHelpFormatter)
-    # For generating pairs of sites
-    parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
-    parser.add_argument('-an', '--ain', help='Use AI NeuralNetwork', action='store_true') #if this flag is not set, it will default to baseline
-    parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
-    parser.add_argument('-p', '--history', help='Collect and Save State History', action='store_true')
-    args = parser.parse_args(arguments)
-    return args
 
 def sample_memories(replay_memory,batch_size):
     indices = np.random.permutation(len(replay_memory))[:batch_size]
@@ -509,6 +502,18 @@ def pre_processHistory(stateHist,actionHist):
                 h.append((oldState,action,reward,newState,cont))
 
         return h
+
+def get_args(arguments):
+    parser = argparse.ArgumentParser(description=__doc__,
+                                    formatter_class=argparse.RawDescriptionHelpFormatter)
+    # For generating pairs of sites
+    parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
+    parser.add_argument('-n', '--ain', help='Use AI NeuralNetwork', action='store_true') #if this flag is not set, it will default to baseline
+    parser.add_argument('-d', '--display', help='Display the game graphically', action='store_true')
+    parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
+    parser.add_argument('-p', '--history', help='Collect and Save State History', action='store_true')
+    args = parser.parse_args(arguments)
+    return args
 
 if __name__ == "__main__" :
     args = get_args(sys.argv[1:])
