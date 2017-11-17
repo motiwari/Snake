@@ -153,8 +153,8 @@ linear_error = 2 * (error - clipped_error)
 loss = tf.reduce_mean(tf.square(clipped_error) + linear_error)
 
 global_step = tf.Variable(0, trainable=False, name='global_step')
-# optimizer = tf.train.momentumOptimizer(cnfg.learning_rate, cnfg.momentum, use_nesterov=True)
-optimizer = tf.train.momentumOptimizer(cnfg.learning_rate, cnfg.momentum)
+# optimizer = tf.train.MomentumOptimizer(cnfg.learning_rate, cnfg.momentum, use_nesterov=True)
+optimizer = tf.train.MomentumOptimizer(cnfg.learning_rate, cnfg.momentum)
 training_op = optimizer.minimize(loss, global_step=global_step)
 
 init = tf.global_variables_initializer()
