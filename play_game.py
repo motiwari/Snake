@@ -185,7 +185,7 @@ class App:
                         if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
                             self.history.append(state.State(self))
                             # TODO: FIx and change to state's direction
-                            if self.counter % 3 ==0: print(self.snake.direction)
+                            print(self.snake.direction)
                             self.actionHistory.append(self.snake.direction)
                     else:
                         self.history.append(state.State(self))
@@ -203,7 +203,7 @@ class App:
                 if self.counter % 3 ==0:
                     self.get_state()
 
-                time.sleep((100.0 - config.SPEED) / 1000.0);
+                #time.sleep((100.0 - config.SPEED) / 1000.0);
 
         #pickle.dump(self.history,open('gamehistory.pkl','wb'))
         #save game STATE
