@@ -183,9 +183,9 @@ class App:
                 if(self.saveHistory):
                     if(self.history):
                         if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
-                            print(state.State(self))
                             self.history.append(state.State(self))
-                            print(self.snake.direction)
+                            # TODO: FIx and change to state's direction
+                            if self.counter % 3 ==0: print(self.snake.direction)
                             self.actionHistory.append(self.snake.direction)
                     else:
                         self.history.append(state.State(self))
@@ -197,8 +197,9 @@ class App:
 
                 if args.display == True:
                     self.on_render()
-                self.counter += 1
+
                 # TODO: WTF is going on here?
+                self.counter += 1
                 if self.counter % 3 ==0:
                     self.get_state()
 
@@ -209,7 +210,6 @@ class App:
         if(self.saveHistory):
             if(self.history):
                 if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
-                    print(state.State(self))
                     self.history.append(state.State(self))
                     print(self.snake.direction)
                     self.actionHistory.append(self.snake.direction)

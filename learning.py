@@ -170,14 +170,10 @@ root_logdir = "tf_logs"
 logdir = "{}/run-{}/".format(root_logdir, now)
 file_writer = tf.summary.FileWriter(logdir, tf.get_default_graph())
 
-eps_min = 0.1
-eps_max = 1.0
-eps_decay_steps = 2000
-
 def epsilon_greedy(q_values, step):
     #print(step)
-    epsilon = eps_min
-    #epsilon = max(eps_min, eps_max - (eps_max-eps_min) * step/eps_decay_steps)
+    epsilon = cnfg.eps_min
+    #epsilon = max(cnfg.eps_min, cnfg.eps_max - (cnfg.eps_max-cnfg.eps_min) * step/cnfg.eps_decay_steps)
     if np.random.rand() < epsilon:
         return np.random.randint(cnfg.n_outputs) # random action
     else:

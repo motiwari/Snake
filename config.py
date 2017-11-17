@@ -32,6 +32,9 @@ n_outputs = 4  # 4 discrete actions are available
 learning_rate = 0.001
 momentum = 0.9
 
+eps_min = 0.1
+eps_max = 1.0
+eps_decay_steps = 2000
 
 # n_steps = 4000000  # total number of training steps
 # training_start = 10000  # start training after 10,000 game iterations
