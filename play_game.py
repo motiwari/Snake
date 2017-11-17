@@ -189,6 +189,7 @@ class App:
         self.usingAI = args.ai
         self.usingNN = args.ain
         self.verbose = args.verbose
+        self.display = args.display
         self.saveHistory = args.history
         self.history = []
         self.actionHistory = []
@@ -196,12 +197,13 @@ class App:
 
     def on_init(self):
         pygame.init()
-        self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
+        if self.display == True:
+            self._display_surf = pygame.display.set_mode((self.windowWidth,self.windowHeight), pygame.HWSURFACE)
 
-        pygame.display.set_caption('SNAKE - motiwari, rschoenh, benzhou')
-        self._running = True
-        self._image_surf = pygame.image.load("pygame.png").convert()
-        self._apple_surf = pygame.image.load("block.png").convert()
+            pygame.display.set_caption('SNAKE - motiwari, rschoenh, benzhou')
+            self._running = True
+            self._image_surf = pygame.image.load("pygame.png").convert()
+            self._apple_surf = pygame.image.load("block.png").convert()
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -285,7 +287,8 @@ class App:
                 self._running = False
 
             self.on_loop()
-            self.on_render()
+            if args.display == True:
+                self.on_render()
             self.counter += 1
             # TODO: WTF is going on here?
             if self.counter % 3 ==0:
@@ -407,6 +410,7 @@ def get_args(arguments):
     # For generating pairs of sites
     parser.add_argument('-a', '--ai', help='Use AI', action='store_true')
     parser.add_argument('-an', '--ain', help='Use AI NeuralNetwork', action='store_true') #if this flag is not set, it will default to baseline
+    parser.add_argument('-d', '--display', help='Display the game graphically', action='store_true')
     parser.add_argument('-v', '--verbose', help='Verbose output', action='store_true')
     parser.add_argument('-p', '--history', help='Collect and Save State History', action='store_true')
     args = parser.parse_args(arguments)
