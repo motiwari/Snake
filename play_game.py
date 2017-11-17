@@ -50,7 +50,7 @@ class App:
     windowHeight = config.WINDOW_HEIGHT
     boardWidth = windowWidth/config.STEP_SIZE
     boardHeight = windowHeight/config.STEP_SIZE
-    
+
     def __init__(self, args, sess):
         self._running = True
         self._display_surf = None
@@ -321,10 +321,7 @@ if __name__ == "__main__" :
     args = get_args(sys.argv[1:])
 
     with tf.Session() as sess:
-        print(args.runs)
         for i in range(args.runs):
-            print('i')
-            print(i)
             theApp = App(args, sess)
             stateHist, actionHist = theApp.on_execute()
             #this whole block of code takes care of loading game history and training the NN
