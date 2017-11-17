@@ -33,8 +33,8 @@ def update(gameHistory):
         # Sample memories and use the target DQN to produce the target Q-Value
         #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
         #    sample_memories(batch_size))
-        #X_next_state_val = np.array(X_next_state_val).reshape(1,input_width)
-        #X_state_val = np.array(X_state_val).reshape(1,input_width)
+        #X_next_state_val = np.array(X_next_state_val).reshape(1,cnfg.input_width)
+        #X_state_val = np.array(X_state_val).reshape(1,cnfg.input_width)
         #X_action_val = np.array(X_action_val).reshape(1)
         #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
         next_q_values = online_q_values.eval(
@@ -85,15 +85,6 @@ def pre_processHistory(stateHist,actionHist):
 
         return h
 
-gwidth = WIDTH_TILES
-gheight = HEIGHT_TILES
-n_hidden = 20
-input_width = int(gwidth * gheight * 3)
-hidden_activation = None
-n_outputs = 4  # 4 discrete actions are available
-
-learning_rate = 0.001
-momentum = 0.9
 
 #convert game state into a feature vector
 def preprocess_observation(obs):
@@ -109,7 +100,7 @@ def preprocess_observation(obs):
     head_x = obs.head[0]
     head_y = obs.head[1]
     # If statement to account for when head goes off board
-    if head_x >= 0 and head_y >= 0 and head_x <width and head_y < height:
+    if head_x >= 0 and head_y >= 0 and head_x < width and head_y < height:
         h[int(cnfg.WIDTH_TILES * head_y + head_x)] = 1
 
     # Tail
@@ -130,10 +121,10 @@ def preprocess_observation(obs):
 def q_network(X_state, name):
     prev_layer = X_state
     with tf.variable_scope(name) as scope:
-        hidden = tf.layers.dense(prev_layer, n_hidden,
-                                 activation=hidden_activation,
+        hidden = tf.layers.dense(prev_layer, cnfg.n_hidden,
+                                 activation=cnfg.hidden_activation,
                                  kernel_initializer=initializer)
-        outputs = tf.layers.dense(hidden, n_outputs,
+        outputs = tf.layers.dense(hidden, cnfg.n_outputs,
                                   kernel_initializer=initializer)
     trainable_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                        scope=scope.name)
@@ -141,9 +132,9 @@ def q_network(X_state, name):
                               for var in trainable_vars}
     return outputs, trainable_vars_by_name
 
-hidden_activation = tf.nn.relu
+cnfg.hidden_activation = tf.nn.relu
 initializer = tf.contrib.layers.variance_scaling_initializer()
-X_state = tf.placeholder(tf.float32, shape=[None, input_width])
+X_state = tf.placeholder(tf.float32, shape=[None, cnfg.input_width])
 online_q_values, online_vars = q_network(X_state, name="q_networks/online")
 target_q_values, target_vars = q_network(X_state, name="q_networks/target")
 
@@ -152,7 +143,7 @@ copy_ops = [target_var.assign(online_vars[var_name])
 copy_online_to_target = tf.group(*copy_ops)
 
 X_action = tf.placeholder(tf.int32, shape=[None])
-q_value = tf.reduce_sum(online_q_values * tf.one_hot(X_action, n_outputs),
+q_value = tf.reduce_sum(online_q_values * tf.one_hot(X_action, cnfg.n_outputs),
                         axis=1, keep_dims=True)
 
 ytrain = tf.placeholder(tf.float32, shape=[None, 1])
@@ -162,14 +153,14 @@ linear_error = 2 * (error - clipped_error)
 loss = tf.reduce_mean(tf.square(clipped_error) + linear_error)
 
 global_step = tf.Variable(0, trainable=False, name='global_step')
-#optimizer = tf.train.MomentumOptimizer(learning_rate, momentum, use_nesterov=True)
-optimizer = tf.train.MomentumOptimizer(learning_rate, momentum)
+# optimizer = tf.train.momentumOptimizer(cnfg.learning_rate, cnfg.momentum, use_nesterov=True)
+optimizer = tf.train.momentumOptimizer(cnfg.learning_rate, momentum)
 training_op = optimizer.minimize(loss, global_step=global_step)
 
 init = tf.global_variables_initializer()
 saver = tf.train.Saver()
 
-#The next few lines are there for the purpose of being able to view things on tensorboard
+# The next few lines are there for the purpose of being able to view things on tensorboard
 now = datetime.utcnow().strftime("%Y%m%d%H%M%S")
 root_logdir = "tf_logs"
 logdir = "{}/run-{}/".format(root_logdir, now)
@@ -184,6 +175,6 @@ def epsilon_greedy(q_values, step):
     epsilon = eps_min
     #epsilon = max(eps_min, eps_max - (eps_max-eps_min) * step/eps_decay_steps)
     if np.random.rand() < epsilon:
-        return np.random.randint(n_outputs) # random action
+        return np.random.randint(cnfg.n_outputs) # random action
     else:
         return np.argmax(q_values) # optimal action

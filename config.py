@@ -25,6 +25,14 @@ discount_rate = 0.99
 batch_size = 20
 checkpoint_path = "./my_dqn.ckpt"
 
+n_hidden = 20
+input_width = int(cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES * 4)
+hidden_activation = None
+n_outputs = 4  # 4 discrete actions are available
+learning_rate = 0.001
+momentum = 0.9
+
+
 # n_steps = 4000000  # total number of training steps
 # training_start = 10000  # start training after 10,000 game iterations
 # training_interval = 4  # run a training step every 4 game iterations
