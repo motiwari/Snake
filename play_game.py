@@ -372,15 +372,19 @@ if __name__ == "__main__" :
                     print(e)
                     print("\n")
                 replay_memory.extend(gameHistory)
-                update(replay_memory, sess)
+                if len(replay_memory) >= cnfg.training_start:
+                    update(replay_memory, sess)
                 if i % cnfg.save_steps == 0:
+
                     saver.save(sess, cnfg.checkpoint_path)
+                    #give it time to save. i'm getting bugs
+                    time.sleep(50.0/1000.0)
                     pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
                     pickle.dump(final_scores,open('finalscores.pkl','wb'))
 
                 #this is a critical piece of code! do not delete unless you know what you're doing
-                # if i % cnfg.copy_steps == 0:
-                #     copy_online_to_target.run()
+                if i % cnfg.copy_steps == 0:
+                    copy_online_to_target.run()
 
         if args.history:
             pickle.dump(replay_memory,open('replay_memory.pkl','wb'))

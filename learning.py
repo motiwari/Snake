@@ -43,9 +43,9 @@ def update(gameHistory, sess):
         max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
         y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
 
-        if i > 19000:
-            print('error', error.eval(feed_dict={X_state: X_state_val,
-                                    X_action: X_action_val, ytrain: y_val}))
+        # if i > 19000:
+        #     print('error', error.eval(feed_dict={X_state: X_state_val,
+        #                             X_action: X_action_val, ytrain: y_val}))
 
     # print('q_value', q_value.eval(feed_dict={X_state: X_state_val,
     #                            X_action: X_action_val, ytrain: y_val}))

@@ -2,6 +2,8 @@ STEP_SIZE = 20
 APPLE_IMAGE = "./block.png"
 INITIAL_APPLE_VALUE = 100
 STEPPING = False
+
+# not sure this is actually used anywhere
 DISCOUNT_FACTOR = 0.98
 
 WINDOW_WIDTH = 80
@@ -10,7 +12,7 @@ WINDOW_HEIGHT = 80
 WIDTH_TILES = int(WINDOW_WIDTH/STEP_SIZE)
 HEIGHT_TILES = int(WINDOW_HEIGHT/STEP_SIZE)
 
-SPEED = 10.0
+SPEED = 100
 # Directions (enum)
 RIGHT = 0
 LEFT = 1
@@ -19,10 +21,11 @@ DOWN = 3
 
 # For tensorflow parameters
 save_steps = 50  # save the model every 1,000 training steps
-copy_steps = 1  # copy online DQN to target DQN every 10,000 training steps
-discount_rate = 0.99
-batch_size = 100
-num_updates_per_game = 0
+copy_steps = 400  # copy online DQN to target DQN every 10,000 training steps
+discount_rate = 0.98
+batch_size = 50
+training_start = 500  # start training after game's memory has built up to 'training_start'
+num_updates_per_game = 5
 checkpoint_path = "./my_dqn.ckpt"
 
 n_hidden2 = 200
@@ -38,7 +41,7 @@ eps_max = 1.0
 eps_decay_steps = 2000
 
 # n_steps = 4000000  # total number of training steps
-# training_start = 10000  # start training after 10,000 game iterations
+
 # training_interval = 4  # run a training step every 4 game iterations
 # skip_start = 90  # Skip the start of every game (it's just waiting time).
 # iteration = 0  # game iterations
