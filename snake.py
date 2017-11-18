@@ -26,8 +26,6 @@ class Snake:
 
         self.last_moved = config.RIGHT
         self.score = 0
-        self.updateCountMax = 2
-        self.updateCount = 0
 
         self.length = length
         for i in range(0,2000):
@@ -37,30 +35,25 @@ class Snake:
         self.head = Head(self.x[0], self.x[0])
 
     def update(self):
-        self.updateCount = self.updateCount + 1
-        if self.updateCount > self.updateCountMax:
+        # update previous positions
+        for i in range(self.length-1,0,-1):
+            self.x[i] = self.x[i-1]
+            self.y[i] = self.y[i-1]
 
-            # update previous positions
-            for i in range(self.length-1,0,-1):
-                self.x[i] = self.x[i-1]
-                self.y[i] = self.y[i-1]
+        # update position of head of snake
+        if self.direction == 0:
+            self.x[0] = self.x[0] + self.step
+        if self.direction == 1:
+            self.x[0] = self.x[0] - self.step
+        if self.direction == 2:
+            self.y[0] = self.y[0] - self.step
+        if self.direction == 3:
+            self.y[0] = self.y[0] + self.step
 
-            # update position of head of snake
-            if self.direction == 0:
-                self.x[0] = self.x[0] + self.step
-            if self.direction == 1:
-                self.x[0] = self.x[0] - self.step
-            if self.direction == 2:
-                self.y[0] = self.y[0] - self.step
-            if self.direction == 3:
-                self.y[0] = self.y[0] + self.step
+        self.last_moved = self.direction
 
-            self.last_moved = self.direction
-
-            self.updateCount = 0
-
-            self.head.x = self.x[0]
-            self.head.y = self.y[0]
+        self.head.x = self.x[0]
+        self.head.y = self.y[0]
 
     def moveRight(self):
         self.direction = config.RIGHT

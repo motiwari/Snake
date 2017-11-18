@@ -67,7 +67,6 @@ class App:
         self.saveHistory = args.history
         self.history = []
         self.actionHistory = []
-        self.counter = 0
         self.sess = sess
 
     def on_init(self):
@@ -177,6 +176,7 @@ class App:
                 self._running = False
 
             #save game STATE
+
             if(self.saveHistory):
                 if(self.history):
                     if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
@@ -195,10 +195,7 @@ class App:
             if args.display == True:
                 self.on_render()
 
-            # TODO: WTF is going on here?
-            self.counter += 1
-            if self.counter % 3 ==0:
-                self.get_state()
+            self.get_state()
 
             #time.sleep((100.0 - config.SPEED) / 1000.0);
 
@@ -335,7 +332,7 @@ if __name__ == "__main__" :
                 #print(replay_memory)
                 print(len(replay_memory))
 
-                gameHistory = pre_processHistory(stateHist,actionHist)
+                gameHistory = pre_processHistory(stateHist, actionHist)
                 for x in gameHistory:
                     print(x)
                     print("\n")

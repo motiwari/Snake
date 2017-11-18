@@ -66,7 +66,7 @@ def update(gameHistory, sess):
     if step % cnfg.save_steps == 0:
         saver.save(sess, cnfg.checkpoint_path)
 
-def pre_processHistory(stateHist,actionHist):
+def pre_processHistory(stateHist, actionHist):
         h = []
         for i,s in enumerate(stateHist):
             if i > 0:
@@ -79,7 +79,7 @@ def pre_processHistory(stateHist,actionHist):
                 if i + 1 == len(stateHist):
                     cont = 0
 
-                h.append((oldState,action,reward,newState,cont))
+                h.append((oldState, action, reward, newState, cont))
 
         return h
 
