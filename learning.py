@@ -23,35 +23,46 @@ def update(gameHistory, sess):
         init.run()
         copy_online_to_target.run()
     step = global_step.eval()
-    X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
+    for i in range(cnfg.num_updates_per_game):
+        X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
 
-    #if len(gameHistory) < 100: #or iteration % training_interval != 0:
-    #   return
+        #if len(gameHistory) < 100: #or iteration % training_interval != 0:
+        #   return
 
-    # Sample memories and use the target DQN to produce the target Q-Value
-    #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
-    #    sample_memories(batch_size))
-    #X_next_state_val = np.array(X_next_state_val).reshape(1,cnfg.input_width)
-    #X_state_val = np.array(X_state_val).reshape(1,cnfg.input_width)
-    #X_action_val = np.array(X_action_val).reshape(1)
-    #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
-    next_q_values = online_q_values.eval(
-        feed_dict={X_state: X_next_state_val})
-    max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
-    y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
+        # Sample memories and use the target DQN to produce the target Q-Value
+        #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
+        #    sample_memories(batch_size))
+        #X_next_state_val = np.array(X_next_state_val).reshape(1,cnfg.input_width)
+        #X_state_val = np.array(X_state_val).reshape(1,cnfg.input_width)
+        #X_action_val = np.array(X_action_val).reshape(1)
+        #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
+    #for i in range(50):
 
-    #for a,b,c,d in zip(y_val,X_state_val,X_action_val,continues):
-    #    print(a)
-    #    print(b)
-    #    print(c)
-    #    print(d)
-    #    print('\n')
-    # Train the online DQN
-    #for i in range(300):
-    q_values = online_q_values.eval(feed_dict={X_state: X_state_val})
-        #print(q_values)
-    training_op.run(feed_dict={X_state: X_state_val,
-                               X_action: X_action_val, ytrain: y_val})
+        next_q_values = target_q_values.eval(
+            feed_dict={X_state: X_next_state_val})
+        max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
+        y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
+
+        if i > 19000:
+            print('error', error.eval(feed_dict={X_state: X_state_val,
+                                    X_action: X_action_val, ytrain: y_val}))
+
+    # print('q_value', q_value.eval(feed_dict={X_state: X_state_val,
+    #                            X_action: X_action_val, ytrain: y_val}))
+    # print('ytrain', ytrain.eval(feed_dict={X_state: X_state_val,
+    #                            X_action: X_action_val, ytrain: y_val}))
+    # for a,b,c,d in zip(y_val,X_state_val,X_action_val,continues):
+        #    print(a)
+        #    print(b)
+        #    print(c)
+        #    print(d)
+        #    print('\n')
+        # Train the online DQN
+        #for i in range(300):
+        #q_values = online_q_values.eval(feed_dict={X_state: X_state_val})
+            #print(q_values)
+        training_op.run(feed_dict={X_state: X_state_val,
+                                   X_action: X_action_val, ytrain: y_val})
 
     #variable_check_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                        #scope="q_networks/online")
@@ -59,12 +70,12 @@ def update(gameHistory, sess):
     #    print(var)
     #    print(var.eval())
     # Regularly copy the online DQN to the target DQN
-    if step % cnfg.copy_steps == 0:
-        copy_online_to_target.run()
-
-    # And save regularly
-    if step % cnfg.save_steps == 0:
-        saver.save(sess, cnfg.checkpoint_path)
+    # if step % cnfg.copy_steps == 0:
+    #     copy_online_to_target.run()
+    #
+    # # And save regularly
+    # if step % cnfg.save_steps == 0:
+    #     saver.save(sess, cnfg.checkpoint_path)
 
 def pre_processHistory(stateHist,actionHist):
         h = []
@@ -123,10 +134,14 @@ def preprocess_observation(obs):
 def q_network(X_state, name):
     prev_layer = X_state
     with tf.variable_scope(name) as scope:
-        hidden = tf.layers.dense(prev_layer, cnfg.n_hidden,
+        # hidden2 = tf.layers.dense(prev_layer, cnfg.n_hidden2,
+        #                          activation=cnfg.hidden_activation,
+        #                          kernel_initializer=initializer)
+
+        hidden1 = tf.layers.dense(prev_layer, cnfg.n_hidden1,
                                  activation=cnfg.hidden_activation,
                                  kernel_initializer=initializer)
-        outputs = tf.layers.dense(hidden, cnfg.n_outputs,
+        outputs = tf.layers.dense(hidden1, cnfg.n_outputs,
                                   kernel_initializer=initializer)
     trainable_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
                                        scope=scope.name)
@@ -144,7 +159,7 @@ def epsilon_greedy(q_values, step):
         return np.argmax(q_values) # optimal action
 
 
-cnfg.hidden_activation = tf.nn.relu
+cnfg.hidden_activation = tf.nn.elu
 initializer = tf.contrib.layers.variance_scaling_initializer()
 X_state = tf.placeholder(tf.float32, shape=[None, cnfg.input_width])
 online_q_values, online_vars = q_network(X_state, name="q_networks/online")
@@ -162,11 +177,13 @@ ytrain = tf.placeholder(tf.float32, shape=[None, 1])
 error = tf.abs(ytrain - q_value)
 clipped_error = tf.clip_by_value(error, 0.0, 1.0)
 linear_error = 2 * (error - clipped_error)
-loss = tf.reduce_mean(tf.square(clipped_error) + linear_error)
+loss = tf.reduce_mean(tf.square(ytrain - q_value))
+# loss = tf.reduce_mean(tf.square(clipped_error) + linear_error)
 
 global_step = tf.Variable(0, trainable=False, name='global_step')
 # optimizer = tf.train.MomentumOptimizer(cnfg.learning_rate, cnfg.momentum, use_nesterov=True)
 optimizer = tf.train.MomentumOptimizer(cnfg.learning_rate, cnfg.momentum)
+
 training_op = optimizer.minimize(loss, global_step=global_step)
 
 init = tf.global_variables_initializer()
