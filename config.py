@@ -10,7 +10,7 @@ WINDOW_HEIGHT = 80
 WIDTH_TILES = int(WINDOW_WIDTH/STEP_SIZE)
 HEIGHT_TILES = int(WINDOW_HEIGHT/STEP_SIZE)
 
-SPEED = 50.0
+SPEED = 10.0
 # Directions (enum)
 RIGHT = 0
 LEFT = 1
@@ -18,18 +18,20 @@ UP = 2
 DOWN = 3
 
 # For tensorflow parameters
-save_steps = 1  # save the model every 1,000 training steps
+save_steps = 50  # save the model every 1,000 training steps
 copy_steps = 1  # copy online DQN to target DQN every 10,000 training steps
 discount_rate = 0.99
-batch_size = 20
+batch_size = 100
+num_updates_per_game = 0
 checkpoint_path = "./my_dqn.ckpt"
 
-n_hidden = 20
+n_hidden2 = 200
+n_hidden1 = 200
 input_width = int(WIDTH_TILES * HEIGHT_TILES * 4)
 hidden_activation = None
 n_outputs = 4  # 4 discrete actions are available
 learning_rate = 0.001
-momentum = 0.9
+momentum = 0.95
 
 eps_min = 0.1
 eps_max = 1.0

@@ -152,19 +152,13 @@ class App:
         if self.on_init() == False:
             self._running = False
 
-        if self.usingAI and self.usingNN:
-            if os.path.isfile(cnfg.checkpoint_path + ".index"):
-                saver.restore(sess, cnfg.checkpoint_path)
-            else:
-                init.run()
-                copy_online_to_target.run()
         while( self._running ):
             pygame.event.pump()
             keys = pygame.key.get_pressed()
 
             if(self.usingAI):
                 if(self.usingNN):
-                    self.choose_ai_move(self.sess)
+                    q_values = self.choose_ai_move(self.sess)
                 else:
                     self.choose_ai_move()
 
@@ -182,10 +176,13 @@ class App:
                     if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
                         self.history.append(state.State(self))
                         # TODO: FIx and change to state's direction
-                        print(self.snake.direction)
+                        # print("appended q_values",q_values)
+                        # print(self.snake.direction)
                         self.actionHistory.append(self.snake.direction)
                 else:
                     self.history.append(state.State(self))
+                    # print("appended q_values",q_values)
+                    # print(self.snake.direction)
                     self.actionHistory.append(self.snake.direction)
 
             # Update the position and direction of snake
@@ -197,7 +194,7 @@ class App:
 
             self.get_state()
 
-            #time.sleep((100.0 - config.SPEED) / 1000.0);
+            time.sleep((100.0 - config.SPEED) / 1000.0);
 
         #pickle.dump(self.history,open('gamehistory.pkl','wb'))
         #save game STATE
@@ -205,10 +202,13 @@ class App:
             if(self.history):
                 if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
                     self.history.append(state.State(self))
-                    print(self.snake.direction)
+                    # print("appended q_values",q_values)
+                    # print(self.snake.direction)
                     self.actionHistory.append(self.snake.direction)
             else:
                 self.history.append(state.State(self))
+                # print("appended q_values",q_values)
+                # print(self.snake.direction)
                 self.actionHistory.append(self.snake.direction)
         self.on_cleanup()
 
@@ -264,6 +264,8 @@ class App:
                         self.snake.direction = action
                     else:
                         self.snake.direction = d
+
+                return q_values
         else:
             if self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  # Make sure snake isn't moving right
                 self.snake.moveLeft()
@@ -318,24 +320,68 @@ if __name__ == "__main__" :
     args = get_args(sys.argv[1:])
 
     with tf.Session() as sess:
+        if os.path.isfile(cnfg.checkpoint_path + ".index"):
+            saver.restore(sess, cnfg.checkpoint_path)
+        else:
+            init.run()
+            copy_online_to_target.run()
+        replay_memory_size = 50000
+        replay_memory = deque([], maxlen=replay_memory_size)
+        final_scores = []
+        if args.history:
+            if os.path.isfile('./replay_memory.pkl'):
+                replay_memory = pickle.load(open("replay_memory.pkl","rb"))
+                print("loaded length")
+                print(len(replay_memory))
+            if os.path.isfile('./finalscores.pkl'):
+                final_scores = pickle.load(open("finalscores.pkl","rb"))
         for i in range(args.runs):
             theApp = App(args, sess)
             stateHist, actionHist = theApp.on_execute()
+
+
             #this whole block of code takes care of loading game history and training the NN
             if args.history:
-                replay_memory_size = 50000
-                replay_memory = deque([], maxlen=replay_memory_size)
-                if os.path.isfile('./replay_memory.pkl'):
-                    replay_memory = pickle.load(open("replay_memory.pkl","rb"))
-
-                #print("replay memory")
+                final_scores.append(stateHist[-1].score)
+                print("replay memory len")
                 #print(replay_memory)
                 print(len(replay_memory))
 
                 gameHistory = pre_processHistory(stateHist, actionHist)
-                for x in gameHistory:
-                    print(x)
+                for i, (a,b,c,d,e) in enumerate(gameHistory):
+                    print("state number: ", i + 1)
+                    size2 = cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
+                    a1 = 8 * a[:size2]
+                    a2 = 2 * a[size2:(2*size2)]
+                    a3 = a[(2*size2):(3*size2)]
+                    a4 = a[(3*size2):]
+                    # print(a1)
+                    # print(a2)
+                    # print(a1)
+                    # print(a2)
+                    aFinal = a1 + a2 + a3 + a4
+                    print("Old State:\n", aFinal.reshape(cnfg.WIDTH_TILES,cnfg.HEIGHT_TILES))
+                    print("Direction", b)
+                    print("Reward", c)
+                    d1 = 8 * d[:size2]
+                    d2 = 2* d[size2:(2*size2)]
+                    d3 = d[(2*size2):(3*size2)]
+                    d4 = d[(3*size2):]
+                    dFinal = d1 + d2 + d3 + d4
+                    print("New State:\n", dFinal.reshape(cnfg.WIDTH_TILES,cnfg.HEIGHT_TILES))
+                    print(e)
                     print("\n")
                 replay_memory.extend(gameHistory)
                 update(replay_memory, sess)
-                pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
+                if i % cnfg.save_steps == 0:
+                    saver.save(sess, cnfg.checkpoint_path)
+                    pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
+                    pickle.dump(final_scores,open('finalscores.pkl','wb'))
+
+                #this is a critical piece of code! do not delete unless you know what you're doing
+                # if i % cnfg.copy_steps == 0:
+                #     copy_online_to_target.run()
+
+        if args.history:
+            pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
+            pickle.dump(final_scores,open('finalscores.pkl','wb'))
