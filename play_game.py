@@ -201,7 +201,7 @@ class App:
             self.snake.last_attempted_action = config.RIGHT
             if self.snake.last_moved != config.LEFT:
                 self.snake.moveRight()
-        if keys[pygame.K_DOWN]
+        if keys[pygame.K_DOWN]:
             self.snake.last_attempted_action = config.DOWN
             if self.snake.last_moved != config.UP:
                 self.snake.moveDown()
