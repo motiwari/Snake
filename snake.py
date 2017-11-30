@@ -10,7 +10,6 @@ class Head:
 
 class Snake:
     step = config.STEP_SIZE
-
     isCollidable = True
 
 
@@ -19,6 +18,12 @@ class Snake:
         self.y = [0]
         self.ars = []
         self.direction = config.RIGHT
+
+        # We need to store the last attempted action in the event
+        # the AI tries to go backwards, where its action is "backwards"
+        # but its future direction is "direction"
+        self.last_attempted_action = config.RIGHT
+
         # The direction a snake has can change multiple times (with the pressing
         # of multiple keys) in a single timestep, which can be used to reverse
         # a snake on itself. The last_moved direction is the *actual* step it took

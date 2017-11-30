@@ -98,7 +98,6 @@ class App:
                     print("You lose! Collision: ")
                     print("FINAL SCORE: ", self.snake.score)
                     print(self.snake.ars)
-                self.get_state()
                 self._running = False
                 return
                 #exit(0)
@@ -112,7 +111,6 @@ class App:
                 print("You lose! Off the board!")
                 print("FINAL SCORE: ", self.snake.score)
                 print(self.snake.ars)
-            self.get_state()
             self._running = False
             return
             #exit(0)
@@ -132,7 +130,6 @@ class App:
                 if self.verbose:
                     print("You WON Snake!!")
                     print("FINAL SCORE: ", self.snake.score)
-                self.get_state()
                 #exit(0)
             else:
                 self.apple.x, self.apple.y = random.choice(freeSqs)
@@ -172,18 +169,8 @@ class App:
             #save game STATE
 
             if(self.saveHistory):
-                if(self.history):
-                    if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
-                        self.history.append(state.State(self))
-                        # TODO: FIx and change to state's direction
-                        # print("appended q_values",q_values)
-                        # print(self.snake.direction)
-                        self.actionHistory.append(self.snake.direction)
-                else:
-                    self.history.append(state.State(self))
-                    # print("appended q_values",q_values)
-                    # print(self.snake.direction)
-                    self.actionHistory.append(self.snake.direction)
+                self.history.append(state.State(self))
+                self.actionHistory.append(self.snake.last_attempted_action)
 
             # Update the position and direction of snake
             # As well as value of apple
@@ -192,38 +179,36 @@ class App:
             if args.display == True:
                 self.on_render()
 
-            self.get_state()
-
             time.sleep((100.0 - config.SPEED) / 1000.0);
 
         #pickle.dump(self.history,open('gamehistory.pkl','wb'))
         #save game STATE
         if(self.saveHistory):
-            if(self.history):
-                if self.history[-1] != state.State(self): #make sure that the state has changed before we append a new state
-                    self.history.append(state.State(self))
-                    # print("appended q_values",q_values)
-                    # print(self.snake.direction)
-                    self.actionHistory.append(self.snake.direction)
-            else:
-                self.history.append(state.State(self))
-                # print("appended q_values",q_values)
-                # print(self.snake.direction)
-                self.actionHistory.append(self.snake.direction)
+            self.history.append(state.State(self))
+            self.actionHistory.append(self.snake.last_attempted_action)
+
         self.on_cleanup()
 
         return self.history, self.actionHistory
 
     def use_player_move(self, keys):
         # Interpret keystroke
-        if keys[pygame.K_LEFT] and self.snake.last_moved != config.RIGHT:
-            self.snake.moveLeft()
-        if keys[pygame.K_RIGHT] and self.snake.last_moved != config.LEFT:
-            self.snake.moveRight()
-        if keys[pygame.K_DOWN] and self.snake.last_moved != config.UP:
-            self.snake.moveDown()
-        if keys[pygame.K_UP] and self.snake.last_moved != config.DOWN:
-            self.snake.moveUp()
+        if keys[pygame.K_LEFT]:
+            self.snake.last_attempted_action = config.LEFT
+            if self.snake.last_moved != config.RIGHT:
+                self.snake.moveLeft()
+        if keys[pygame.K_RIGHT]:
+            self.snake.last_attempted_action = config.RIGHT
+            if self.snake.last_moved != config.LEFT:
+                self.snake.moveRight()
+        if keys[pygame.K_DOWN]
+            self.snake.last_attempted_action = config.DOWN
+            if self.snake.last_moved != config.UP:
+                self.snake.moveDown()
+        if keys[pygame.K_UP]:
+            self.snake.last_attempted_action = config.UP
+            if self.snake.last_moved != config.DOWN:
+                self.snake.moveUp()
 
     def choose_ai_move(self,sess = None):
         x = self.snake.x[0]
@@ -244,6 +229,7 @@ class App:
                 action = epsilon_greedy(q_values, step)
                     #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
                 print(action)
+                self.snake.last_attempted_action = action
                 if d == config.RIGHT:
                     if action != config.LEFT:
                         self.snake.direction = action
@@ -268,40 +254,38 @@ class App:
                 return q_values
         else:
             if self.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(self, config.LEFT):  # Make sure snake isn't moving right
+                self.snake.last_attempted_action = config.LEFT
                 self.snake.moveLeft()
             elif self.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(self, config.RIGHT): # Make sure snake isn't moving left
+                self.snake.last_attempted_action = config.RIGHT
                 self.snake.moveRight()
             elif self.apple.y - y < 0 and d != config.DOWN and not isNextMoveCollision(self, config.UP): # Make sure snake isn't moving down
+                self.snake.last_attempted_action = config.UP
                 self.snake.moveUp()
             elif self.apple.y - y > 0 and d != config.UP and not isNextMoveCollision(self, config.DOWN): # Make sure snake isn't moving up
+                self.snake.last_attempted_action = config.DOWN
                 self.snake.moveDown()
             else:
                 # Case when apple is directly behind snake
                 if (d == config.LEFT or d == config.RIGHT) and not isNextMoveCollision(self, d + 2):
+                    self.snake.last_attempted_action = d + 2
                     self.snake.direction = d + 2
                 elif (d == config.UP or d == config.DOWN) and not isNextMoveCollision(self, d - 2):
+                    self.snake.last_attempted_action = d - 2
                     self.snake.direction = d - 2
                 else:
                     x = list(range(0,4))
                     random.shuffle(x)
                     for i in x: # Iterate until you find a valid move
                         if not isNextMoveCollision(self, i):
+                            self.snake.last_attempted_action = i
                             self.snake.direction = i
                             break
 
                     # No move exists, move right. THIS IS WHERE YOU DIE.
+                    self.snake.last_attempted_action = config.RIGHT
                     self.snake.direction = config.RIGHT
 
-
-    def get_state(self):
-        s = state.State(self)
-        if self.verbose:
-            print("NEW STATE:")
-            print("SCORE: ", s.score)
-            print("APPLE: ", s.apple)
-            print("HEAD: ", s.head)
-            print("TAIL: ", s.tail)
-            print("BODY PARTS: ", s.body_parts)
 
 def get_args(arguments):
     parser = argparse.ArgumentParser(description=__doc__,
