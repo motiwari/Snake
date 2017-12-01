@@ -119,9 +119,10 @@ def preprocess_observation(obs):
     w = obs.body_parts[0]
     second_x = w[0]
     second_y = w[1]
-    # Tail starts off the board
+    # second body part starts off the board
     if second_x >= 0 and second_y >= 0 and second_x < cnfg.WIDTH_TILES and second_y < cnfg.HEIGHT_TILES:
-        b[int(second_y) + OFFSET, int(second_x) + OFFSET] = 1
+        sb[int(second_y) + OFFSET, int(second_x) + OFFSET] = 1
+
     # Tail
     t = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
     tail_x = obs.tail[0]
