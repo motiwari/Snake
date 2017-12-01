@@ -98,47 +98,64 @@ def pre_processHistory(stateHist, actionHist):
 #convert game state into a feature vector
 def preprocess_observation(obs):
     # Add indicators at each coordinate for apple
-    a = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
+    OFFSET = 1
+    PAD = 2
+    a = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
     apple_x = int(obs.apple[0])
     apple_y = int(obs.apple[1])
-    a[cnfg.WIDTH_TILES * apple_y + apple_x] = 1
+    a[apple_y + OFFSET, apple_x + OFFSET] = 1
 
     # Add indicators for head
-    h = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
+    h = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
 
     head_x = obs.head[0]
     head_y = obs.head[1]
     # If statement to account for when head goes off board
     if head_x >= 0 and head_y >= 0 and head_x < cnfg.WIDTH_TILES and head_y < cnfg.HEIGHT_TILES:
-        h[int(cnfg.WIDTH_TILES * head_y + head_x)] = 1
+        h[int(head_y) + OFFSET, int(head_x) + OFFSET] = 1
 
     # Tail
-    t = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
+    t = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
     tail_x = obs.tail[0]
     tail_y = obs.tail[1]
     # Tail starts off the board
     if tail_x >= 0 and tail_y >= 0 and tail_x < cnfg.WIDTH_TILES and tail_y < cnfg.HEIGHT_TILES:
-        t[int(cnfg.WIDTH_TILES * tail_y + tail_x)] = 1
+        t[int(tail_y) + OFFSET, int(tail_x) + OFFSET] = 1
 
     # Add indicators for each body part
-    b = [0] * cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
+    b = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
     for w in obs.body_parts:
         body_x = w[0]
         body_y = w[1]
         # Tail starts off the board
         if body_x >= 0 and body_y >= 0 and body_x < cnfg.WIDTH_TILES and body_y < cnfg.HEIGHT_TILES:
-            b[int(cnfg.WIDTH_TILES * body_y + body_x)] = 1
+            b[int(body_y) + OFFSET, int(body_x) + OFFSET] = 1
 
-    return np.array(a + h + t + b)
+    # Add 'ones' around perimeter
+    topbottom = np.ones((1,cnfg.WIDTH_TILES + PAD))
+    middle = np.zeros((1,cnfg.WIDTH_TILES + PAD))
+    middle[0,0] = 1
+    middle[0,-1] = 1
+    middle = np.repeat(middle,cnfg.HEIGHT_TILES,axis=0)
+    board = np.concatenate((topbottom,middle,topbottom),axis=0)
+
+    f = np.stack((a,b,h,t,board),2) #stack along the final dimension - needed for input into convolutional nn
+    return f
+    # return np.array(a + h + t + b)
 
 def q_network(X_state, name):
     prev_layer = X_state
     with tf.variable_scope(name) as scope:
-        # hidden2 = tf.layers.dense(prev_layer, cnfg.n_hidden2,
-        #                          activation=cnfg.hidden_activation,
-        #                          kernel_initializer=initializer)
+        for n_maps, kernel_size, strides, padding, activation in zip(
+                cnfg.conv_n_maps, cnfg.conv_kernel_sizes, cnfg.conv_strides,
+                cnfg.conv_paddings, cnfg.conv_activation):
+            prev_layer = tf.layers.conv2d(
+                prev_layer, filters=n_maps, kernel_size=kernel_size,
+                strides=strides, padding=padding, activation=activation,
+                kernel_initializer=initializer)
+        last_conv_layer_flat = tf.reshape(prev_layer, shape=[-1, cnfg.n_hidden_in])
 
-        hidden1 = tf.layers.dense(prev_layer, cnfg.n_hidden1,
+        hidden1 = tf.layers.dense(last_conv_layer_flat, cnfg.n_hidden1,
                                  activation=cnfg.hidden_activation,
                                  kernel_initializer=initializer)
         outputs = tf.layers.dense(hidden1, cnfg.n_outputs,
@@ -149,10 +166,27 @@ def q_network(X_state, name):
                               for var in trainable_vars}
     return outputs, trainable_vars_by_name
 
-def epsilon_greedy(q_values, step):
+def epsilon_greedy(q_values, snakeLength, isOnEdge):
     #print(step)
-    epsilon = cnfg.eps_min
-    #epsilon = max(cnfg.eps_min, cnfg.eps_max - (cnfg.eps_max-cnfg.eps_min) * step/cnfg.eps_decay_steps)
+    epsilon = .3
+    if snakeLength > 10:
+        epsilon = .15
+
+    if snakeLength > 20:
+        epsilon = .1
+
+    if snakeLength > 30:
+        epsilon = .05
+
+    if snakeLength > 40:
+        epsilon = .03
+
+    if isOnEdge:
+        epsilon = 0.2
+
+    # if step > 10000:
+    #     epsilon = .05
+    # epsilon = max(cnfg.eps_min, cnfg.eps_max - (cnfg.eps_max-cnfg.eps_min) * step/cnfg.eps_decay_steps)
     if np.random.rand() < epsilon:
         return np.random.randint(cnfg.n_outputs) # random action
     else:
@@ -161,7 +195,8 @@ def epsilon_greedy(q_values, step):
 
 cnfg.hidden_activation = tf.nn.elu
 initializer = tf.contrib.layers.variance_scaling_initializer()
-X_state = tf.placeholder(tf.float32, shape=[None, cnfg.input_width])
+X_state = tf.placeholder(tf.float32, shape=[None, cnfg.input_height, cnfg.input_width,
+                                            cnfg.input_channels])
 online_q_values, online_vars = q_network(X_state, name="q_networks/online")
 target_q_values, target_vars = q_network(X_state, name="q_networks/target")
 

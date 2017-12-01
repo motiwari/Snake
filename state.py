@@ -26,6 +26,11 @@ class State:
         n = self.snake.length - 1
         self.tail = (self.snake.x[n]/config.STEP_SIZE, self.snake.y[n]/config.STEP_SIZE)
 
+    def isonedge(self):
+        if int(self.head[0]) == 0 or int(self.head[1]) == 0 or int(self.head[0]) == (config.WIDTH_TILES - 1) or int(self.head[1]) == (config.HEIGHT_TILES - 1):
+            return True
+        return False
+
     def __eq__(self, other):
         #can't compare apple until the bug of repeating states is fixed
         #if self.apple != other.apple:

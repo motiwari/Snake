@@ -116,7 +116,7 @@ class App:
             #exit(0)
 
         #reward the player for surviving longer
-        self.snake.score += 1
+        self.snake.score -= 1
         # Does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.snake.length = self.snake.length + 1
@@ -222,11 +222,13 @@ class App:
                 features = preprocess_observation(s)
                 action = 0
                 #with tf.Session() as sess:
-                step = global_step.eval()
+                # step = global_step.eval()
+                print(np.sum(features,axis=2))
                 q_values = online_q_values.eval(feed_dict={X_state: [features]})
                 #print(features)
                 print(q_values)
-                action = epsilon_greedy(q_values, step)
+                isOnEdge = s.isonedge()
+                action = epsilon_greedy(q_values, self.snake.length, isOnEdge)
                     #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
                 print(action)
                 self.snake.last_attempted_action = action
@@ -309,7 +311,7 @@ if __name__ == "__main__" :
         else:
             init.run()
             copy_online_to_target.run()
-        replay_memory_size = 50000
+        replay_memory_size = cnfg.replay_memory
         replay_memory = deque([], maxlen=replay_memory_size)
         final_scores = []
         if args.history:
@@ -333,28 +335,28 @@ if __name__ == "__main__" :
 
                 gameHistory = pre_processHistory(stateHist, actionHist)
                 for i, (a,b,c,d,e) in enumerate(gameHistory):
-                    print("state number: ", i + 1)
-                    size2 = cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
-                    a1 = 8 * a[:size2]
-                    a2 = 2 * a[size2:(2*size2)]
-                    a3 = a[(2*size2):(3*size2)]
-                    a4 = a[(3*size2):]
-                    # print(a1)
-                    # print(a2)
-                    # print(a1)
-                    # print(a2)
-                    aFinal = a1 + a2 + a3 + a4
-                    print("Old State:\n", aFinal.reshape(cnfg.WIDTH_TILES,cnfg.HEIGHT_TILES))
+                #     print("state number: ", i + 1)
+                #     size2 = cnfg.WIDTH_TILES * cnfg.HEIGHT_TILES
+                #     a1 = 8 * a[:size2]
+                #     a2 = 2 * a[size2:(2*size2)]
+                #     a3 = a[(2*size2):(3*size2)]
+                #     a4 = a[(3*size2):]
+                #     # print(a1)
+                #     # print(a2)
+                #     # print(a1)
+                #     # print(a2)
+                #     aFinal = a1 + a2 + a3 + a4
+                #     print("Old State:\n", aFinal.reshape(cnfg.WIDTH_TILES,cnfg.HEIGHT_TILES))
                     print("Direction", b)
                     print("Reward", c)
-                    d1 = 8 * d[:size2]
-                    d2 = 2* d[size2:(2*size2)]
-                    d3 = d[(2*size2):(3*size2)]
-                    d4 = d[(3*size2):]
-                    dFinal = d1 + d2 + d3 + d4
-                    print("New State:\n", dFinal.reshape(cnfg.WIDTH_TILES,cnfg.HEIGHT_TILES))
-                    print(e)
-                    print("\n")
+                #     d1 = 8 * d[:size2]
+                #     d2 = 2* d[size2:(2*size2)]
+                #     d3 = d[(2*size2):(3*size2)]
+                #     d4 = d[(3*size2):]
+                #     dFinal = d1 + d2 + d3 + d4
+                #     print("New State:\n", dFinal.reshape(cnfg.WIDTH_TILES,cnfg.HEIGHT_TILES))
+                #     print(e)
+                #     print("\n")
                 replay_memory.extend(gameHistory)
                 if len(replay_memory) >= cnfg.training_start:
                     update(replay_memory, sess)
@@ -362,7 +364,7 @@ if __name__ == "__main__" :
 
                     saver.save(sess, cnfg.checkpoint_path)
                     #give it time to save. i'm getting bugs
-                    time.sleep(50.0/1000.0)
+                    #time.sleep(50.0/1000.0)
                     pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
                     pickle.dump(final_scores,open('finalscores.pkl','wb'))
 
