@@ -45,6 +45,34 @@ def isNextMoveCollision(pyg, direction):
             return True
     return False
 
+def baselineGreedy(pyg):
+
+    x = pyg.snake.x[0]
+    y = pyg.snake.y[0]
+    d = pyg.snake.last_moved
+
+    if pyg.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(pyg, config.LEFT):  # Make sure snake isn't moving right
+        return config.LEFT
+    elif pyg.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(pyg, config.RIGHT): # Make sure snake isn't moving left
+        return config.RIGHT
+    elif pyg.apple.y - y < 0 and d != config.DOWN and not isNextMoveCollision(pyg, config.UP): # Make sure snake isn't moving down
+        return config.UP
+    elif pyg.apple.y - y > 0 and d != config.UP and not isNextMoveCollision(pyg, config.DOWN): # Make sure snake isn't moving up
+        return config.DOWN
+    else:
+        # Case when apple is directly behind snake
+        if (d == config.LEFT or d == config.RIGHT) and not isNextMoveCollision(pyg, d + 2):
+            return d + 2
+        elif (d == config.UP or d == config.DOWN) and not isNextMoveCollision(pyg, d - 2):
+            return d - 2
+        else:
+            x = list(range(0,4))
+            random.shuffle(x)
+            for i in x: # Iterate until you find a valid move
+                if not isNextMoveCollision(pyg, i):
+                    return i
+
+            return config.RIGHT
 class App:
     windowWidth = config.WINDOW_WIDTH
     windowHeight = config.WINDOW_HEIGHT
@@ -116,7 +144,7 @@ class App:
             #exit(0)
 
         #reward the player for surviving longer
-        self.snake.score -= 1
+        # self.snake.score -= 1
         # Does snake eat apple?
         if self.gameEngine.isCollision(self.apple, self.snake.head):
             self.snake.length = self.snake.length + 1
@@ -228,7 +256,8 @@ class App:
                 #print(features)
                 print(q_values)
                 isOnEdge = s.isonedge()
-                action = epsilon_greedy(q_values, self.snake.length, isOnEdge)
+                suggestedAction = baselineGreedy(self)
+                action = epsilon_greedy(q_values, self.snake.length, isOnEdge, suggestedAction)
                     #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
                 print(action)
                 self.snake.last_attempted_action = action
@@ -282,7 +311,7 @@ class App:
                         if not isNextMoveCollision(self, i):
                             self.snake.last_attempted_action = i
                             self.snake.direction = i
-                            break
+                            return
 
                     # No move exists, move right. THIS IS WHERE YOU DIE.
                     self.snake.last_attempted_action = config.RIGHT

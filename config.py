@@ -5,11 +5,11 @@ APPLE_IMAGE = "./block.png"
 INITIAL_APPLE_VALUE = 100
 STEPPING = False
 
-# not sure this is actually used anywhere
-DISCOUNT_FACTOR = 0.98
+# Used to decay the apple
+DISCOUNT_FACTOR = 1.00 # i turned off decay for now to help the snake train
 
-WINDOW_WIDTH = 280
-WINDOW_HEIGHT = 280
+WINDOW_WIDTH = 200
+WINDOW_HEIGHT = 200
 
 WIDTH_TILES = int(WINDOW_WIDTH/STEP_SIZE)
 HEIGHT_TILES = int(WINDOW_HEIGHT/STEP_SIZE)
@@ -23,27 +23,28 @@ DOWN = 3
 
 # For tensorflow parameters
 save_steps = 50  # save the model every 1,000 training steps
-copy_steps = 300  # copy online DQN to target DQN every 10,000 training steps
-discount_rate = 0.98
-batch_size = 100
+copy_steps = 300  # copy online DQN to target DQN every 'copy_steps' training steps
+discount_rate = 0.98 # discount rate for the q-value algorithm
+batch_size = 500
 training_start = 1000  # start training after game's memory has built up to 'training_start'
-num_updates_per_game = 20
+num_updates_per_game = 10
 checkpoint_path = "./my_dqn.ckpt"
-replay_memory = 100000
+replay_memory = 200000
+epsilon_guided = .5 # this controls, when an exploration action is chosen, how often it chooses a guided action
 
 # convolutional parameters
-conv_n_maps = [32, 64]
-conv_kernel_sizes = [(4,4), (4,4)]
-conv_strides = [2, 2]
+conv_n_maps = [32, 64, 64]
+conv_kernel_sizes = [(4,4), (4,4), (4,4)]
+conv_strides = [1, 2, 1]
 conv_paddings = ["SAME"] * 2
 conv_activation = [tf.nn.relu] * 2
 
-n_hidden1 = 300
+n_hidden1 = 40
 input_height = int(HEIGHT_TILES) + 2
 input_width = int(WIDTH_TILES) + 2
-input_channels = 5 # we have a matrix for head, tail, apple, board, and body all stacked on top of each other
-hidden_activation = None
-n_hidden_in = 1024
+input_channels = 6 # we have a matrix for head, tail, apple, board, secnd body part, and rest of body all stacked on top of each other
+hidden_activation = tf.nn.elu
+n_hidden_in = 2304
 n_outputs = 4  # 4 discrete actions are available
 learning_rate = 0.001
 momentum = 0.95

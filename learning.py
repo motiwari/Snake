@@ -114,6 +114,14 @@ def preprocess_observation(obs):
     if head_x >= 0 and head_y >= 0 and head_x < cnfg.WIDTH_TILES and head_y < cnfg.HEIGHT_TILES:
         h[int(head_y) + OFFSET, int(head_x) + OFFSET] = 1
 
+    # add indicator for second body part. This is a critical feature.
+    sb = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
+    w = obs.body_parts[0]
+    second_x = w[0]
+    second_y = w[1]
+    # Tail starts off the board
+    if second_x >= 0 and second_y >= 0 and second_x < cnfg.WIDTH_TILES and second_y < cnfg.HEIGHT_TILES:
+        b[int(second_y) + OFFSET, int(second_x) + OFFSET] = 1
     # Tail
     t = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
     tail_x = obs.tail[0]
@@ -124,12 +132,14 @@ def preprocess_observation(obs):
 
     # Add indicators for each body part
     b = np.zeros((cnfg.HEIGHT_TILES + PAD,cnfg.WIDTH_TILES + PAD))
-    for w in obs.body_parts:
-        body_x = w[0]
-        body_y = w[1]
-        # Tail starts off the board
-        if body_x >= 0 and body_y >= 0 and body_x < cnfg.WIDTH_TILES and body_y < cnfg.HEIGHT_TILES:
-            b[int(body_y) + OFFSET, int(body_x) + OFFSET] = 1
+    for i,w in enumerate(obs.body_parts):
+
+        if i > 0: # Second body part is it's own separate feature
+            body_x = w[0]
+            body_y = w[1]
+            # Tail starts off the board
+            if body_x >= 0 and body_y >= 0 and body_x < cnfg.WIDTH_TILES and body_y < cnfg.HEIGHT_TILES:
+                b[int(body_y) + OFFSET, int(body_x) + OFFSET] = 1
 
     # Add 'ones' around perimeter
     topbottom = np.ones((1,cnfg.WIDTH_TILES + PAD))
@@ -139,7 +149,7 @@ def preprocess_observation(obs):
     middle = np.repeat(middle,cnfg.HEIGHT_TILES,axis=0)
     board = np.concatenate((topbottom,middle,topbottom),axis=0)
 
-    f = np.stack((a,b,h,t,board),2) #stack along the final dimension - needed for input into convolutional nn
+    f = np.stack((a,b,sb,h,t,board),2) #stack along the final dimension - needed for input into convolutional nn
     return f
     # return np.array(a + h + t + b)
 
@@ -166,9 +176,9 @@ def q_network(X_state, name):
                               for var in trainable_vars}
     return outputs, trainable_vars_by_name
 
-def epsilon_greedy(q_values, snakeLength, isOnEdge):
+def epsilon_greedy(q_values, snakeLength, isOnEdge, suggestedAction):
     #print(step)
-    epsilon = .3
+    epsilon = .4
     if snakeLength > 10:
         epsilon = .15
 
@@ -182,18 +192,20 @@ def epsilon_greedy(q_values, snakeLength, isOnEdge):
         epsilon = .03
 
     if isOnEdge:
-        epsilon = 0.2
+        epsilon = min(epsilon, 0.08)
 
     # if step > 10000:
     #     epsilon = .05
     # epsilon = max(cnfg.eps_min, cnfg.eps_max - (cnfg.eps_max-cnfg.eps_min) * step/cnfg.eps_decay_steps)
     if np.random.rand() < epsilon:
-        return np.random.randint(cnfg.n_outputs) # random action
+        if np.random.rand() < 1.0 - cnfg.epsilon_guided:
+            return np.random.randint(cnfg.n_outputs) # random action
+
+        return suggestedAction # this is the move that will take snake closer to apple
     else:
         return np.argmax(q_values) # optimal action
 
 
-cnfg.hidden_activation = tf.nn.elu
 initializer = tf.contrib.layers.variance_scaling_initializer()
 X_state = tf.placeholder(tf.float32, shape=[None, cnfg.input_height, cnfg.input_width,
                                             cnfg.input_channels])
