@@ -251,15 +251,18 @@ class App:
                 action = 0
                 #with tf.Session() as sess:
                 # step = global_step.eval()
-                print(np.sum(features,axis=2))
+                if self.verbose:
+                    print(np.sum(features,axis=2))
                 q_values = online_q_values.eval(feed_dict={X_state: [features]})
                 #print(features)
-                print(q_values)
+                if self.verbose:
+                    print(q_values)
                 isOnEdge = s.isonedge()
                 suggestedAction = baselineGreedy(self)
                 action = epsilon_greedy(q_values, self.snake.length, isOnEdge, suggestedAction)
                     #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
-                print(action)
+                if self.verbose:
+                    print(action)
                 self.snake.last_attempted_action = action
                 if d == config.RIGHT:
                     if action != config.LEFT:
@@ -358,9 +361,10 @@ if __name__ == "__main__" :
             #this whole block of code takes care of loading game history and training the NN
             if args.history:
                 final_scores.append(stateHist[-1].score)
-                print("replay memory len")
-                #print(replay_memory)
-                print(len(replay_memory))
+                if args.verbose:
+                    print("replay memory len")
+                    #print(replay_memory)
+                    print(len(replay_memory))
 
                 gameHistory = pre_processHistory(stateHist, actionHist)
                 for i, (a,b,c,d,e) in enumerate(gameHistory):
@@ -376,8 +380,9 @@ if __name__ == "__main__" :
                 #     # print(a2)
                 #     aFinal = a1 + a2 + a3 + a4
                 #     print("Old State:\n", aFinal.reshape(cnfg.WIDTH_TILES,cnfg.HEIGHT_TILES))
-                    print("Direction", b)
-                    print("Reward", c)
+                    if args.verbose:
+                        print("Direction", b)
+                        print("Reward", c)
                 #     d1 = 8 * d[:size2]
                 #     d2 = 2* d[size2:(2*size2)]
                 #     d3 = d[(2*size2):(3*size2)]
