@@ -14,7 +14,7 @@ WINDOW_HEIGHT = 200
 WIDTH_TILES = int(WINDOW_WIDTH/STEP_SIZE)
 HEIGHT_TILES = int(WINDOW_HEIGHT/STEP_SIZE)
 
-SPEED = 100
+SPEED = 5
 # Directions (enum)
 RIGHT = 0
 LEFT = 1
@@ -27,7 +27,7 @@ copy_steps = 300  # copy online DQN to target DQN every 'copy_steps' training st
 discount_rate = 0.98 # discount rate for the q-value algorithm
 batch_size = 500
 training_start = 1000  # start training after game's memory has built up to 'training_start'
-num_updates_per_game = 10
+num_updates_per_game = 5
 checkpoint_path = "./my_dqn.ckpt"
 replay_memory = 200000
 epsilon_guided = .5 # this controls, when an exploration action is chosen, how often it chooses a guided action

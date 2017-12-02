@@ -179,21 +179,21 @@ def q_network(X_state, name):
 
 def epsilon_greedy(q_values, snakeLength, isOnEdge, suggestedAction):
     #print(step)
-    epsilon = .4
+    epsilon = .1
     if snakeLength > 10:
-        epsilon = .15
+        epsilon = .08
 
     if snakeLength > 20:
-        epsilon = .1
+        epsilon = .5
 
     if snakeLength > 30:
         epsilon = .05
 
     if snakeLength > 40:
-        epsilon = .03
+        epsilon = .05
 
     if isOnEdge:
-        epsilon = min(epsilon, 0.08)
+        epsilon = min(epsilon, 0.06)
 
     # if step > 10000:
     #     epsilon = .05
