@@ -79,7 +79,7 @@ class App:
     boardWidth = windowWidth/config.STEP_SIZE
     boardHeight = windowHeight/config.STEP_SIZE
 
-    def __init__(self, args, sess):
+    def __init__(self, args, sess, runNumber):
         self._running = True
         self._display_surf = None
         self._image_surf = None
@@ -96,6 +96,7 @@ class App:
         self.history = []
         self.actionHistory = []
         self.sess = sess
+        self.runNumber = runNumber
 
     def on_init(self):
         pygame.init()
@@ -259,7 +260,7 @@ class App:
                     print(q_values)
                 isOnEdge = s.isonedge()
                 suggestedAction = baselineGreedy(self)
-                action = epsilon_greedy(q_values, self.snake.length, isOnEdge, suggestedAction)
+                action = epsilon_greedy(q_values, self.snake.length, isOnEdge, suggestedAction, self.runNumber)
                     #CHECK TO MAKE SURE THAT CHOSEN DIRECTION IS VALID
                 if self.verbose:
                     print(action)
@@ -354,7 +355,8 @@ if __name__ == "__main__" :
             if os.path.isfile('./finalscores.pkl'):
                 final_scores = pickle.load(open("finalscores.pkl","rb"))
         for i in range(args.runs):
-            theApp = App(args, sess)
+            theApp = App(args, sess,i)
+            print(i)
             stateHist, actionHist = theApp.on_execute()
 
 

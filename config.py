@@ -30,7 +30,7 @@ training_start = 1000  # start training after game's memory has built up to 'tra
 num_updates_per_game = 5
 checkpoint_path = "./my_dqn.ckpt"
 replay_memory = 200000
-epsilon_guided = .5 # this controls, when an exploration action is chosen, how often it chooses a guided action
+epsilon_guided = .65 # this controls, when an exploration action is chosen, how often it chooses a guided action
 
 # convolutional parameters
 conv_n_maps = [32, 64, 64]
