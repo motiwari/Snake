@@ -39,7 +39,7 @@ conv_strides = [1, 2, 1]
 conv_paddings = ["SAME"] * 2
 conv_activation = [tf.nn.relu] * 2
 
-n_hidden1 = 40
+n_hidden1 = 30
 input_height = int(HEIGHT_TILES) + 2
 input_width = int(WIDTH_TILES) + 2
 input_channels = 6 # we have a matrix for head, tail, apple, board, secnd body part, and rest of body all stacked on top of each other
