@@ -179,7 +179,7 @@ def q_network(X_state, name):
 
 def epsilon_greedy(q_values, snakeLength, isOnEdge, suggestedAction, numGamesPlayed):
     #print(step)
-    epsilon = .6
+    epsilon = .65
     if numGamesPlayed > 6000:
         epsilon = .5
 
