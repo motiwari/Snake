@@ -179,24 +179,24 @@ def q_network(X_state, name):
 
 def epsilon_greedy(q_values, snakeLength, isOnEdge, suggestedAction, numGamesPlayed):
     #print(step)
-    epsilon = .65
+    epsilon = .8
     if numGamesPlayed > 6000:
-        epsilon = .5
+        epsilon = .8
 
     if numGamesPlayed > 12000:
-        epsilon = .4
+        epsilon = .6
 
     if numGamesPlayed > 18000:
-        epsilon = .3
+        epsilon = .5
 
     if numGamesPlayed > 24000:
-        epsilon = .2
+        epsilon = .4
 
     if numGamesPlayed > 30000:
-        epsilon = .15
+        epsilon = .3
 
     if numGamesPlayed > 40000:
-        epsilon = .12
+        epsilon = .2
 
     if snakeLength > 10:
         epsilon = .1
@@ -210,8 +210,8 @@ def epsilon_greedy(q_values, snakeLength, isOnEdge, suggestedAction, numGamesPla
     if snakeLength > 40:
         epsilon = .03
 
-    #if isOnEdge:
-    #    epsilon = min(epsilon, .15)
+    if isOnEdge:
+       epsilon = min(epsilon, 0)
 
     # if step > 10000:
     #     epsilon = .05

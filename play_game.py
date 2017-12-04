@@ -385,6 +385,7 @@ if __name__ == "__main__" :
                     if args.verbose:
                         print("Direction", b)
                         print("Reward", c)
+                        print("Continue",e)
                 #     d1 = 8 * d[:size2]
                 #     d2 = 2* d[size2:(2*size2)]
                 #     d3 = d[(2*size2):(3*size2)]
