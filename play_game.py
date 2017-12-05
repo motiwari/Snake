@@ -121,7 +121,7 @@ class App:
             # Fix this
             dummy_head = snake.Head(self.snake.x[i], self.snake.y[i])
             if self.gameEngine.isCollision(self.snake.head, dummy_head):
-                self.snake.score -= 100
+                self.snake.score -= 1
                 self.snake.addActionAndReward(self.snake.direction, 0)
                 if self.verbose:
                     print("You lose! Collision: ")
@@ -134,7 +134,7 @@ class App:
         if self.snake.head.x < 0 or self.snake.head.x >= self.windowWidth or \
             self.snake.head.y < 0 or self.snake.head.y >= self.windowHeight:
             #punish the player for running into itself
-            self.snake.score -= 100
+            self.snake.score -= 1
             self.snake.addActionAndReward(self.snake.direction, 0)
             if self.verbose:
                 print("You lose! Off the board!")
@@ -153,7 +153,7 @@ class App:
             if self.verbose:
                 print("Ate apple with value ", self.apple.value)
             self.snake.addActionAndReward(self.snake.direction, self.apple.value)
-            self.apple.value = 100
+            self.apple.value = 1
             freeSqs = self.gameEngine.getBoardFreeSquares(self.snake)
             if freeSqs == []:
                 if self.verbose:

@@ -198,17 +198,17 @@ def epsilon_greedy(q_values, snakeLength, isOnEdge, suggestedAction, numGamesPla
     if numGamesPlayed > 40000:
         epsilon = .2
 
-    if snakeLength > 10:
-        epsilon = .1
-
-    if snakeLength > 20:
-        epsilon = .08
-
-    if snakeLength > 30:
-        epsilon = .05
-
-    if snakeLength > 40:
-        epsilon = .03
+    # if snakeLength > 10:
+    #     epsilon = .1
+    #
+    # if snakeLength > 20:
+    #     epsilon = .08
+    #
+    # if snakeLength > 30:
+    #     epsilon = .05
+    #
+    # if snakeLength > 40:
+    #     epsilon = .03
 
     # if isOnEdge:
     #    epsilon = min(epsilon, 0)
