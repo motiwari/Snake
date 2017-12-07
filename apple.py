@@ -8,7 +8,7 @@ class Apple:
         self.x = x * config.STEP_SIZE
         self.y = y * config.STEP_SIZE
         self.image = config.APPLE_IMAGE
-        self.value = 100
+        self.value = 1
 
     def update(self):
         self.value *= self.discountFactor
