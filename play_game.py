@@ -355,7 +355,8 @@ if __name__ == "__main__" :
             if os.path.isfile('./finalscores.pkl'):
                 final_scores = pickle.load(open("finalscores.pkl","rb"))
         for i in range(args.runs):
-            theApp = App(args, sess,i)
+            j = len(final_scores)
+            theApp = App(args, sess,j)
             print(i)
             stateHist, actionHist = theApp.on_execute()
 
