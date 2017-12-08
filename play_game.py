@@ -357,7 +357,7 @@ if __name__ == "__main__" :
         for i in range(args.runs):
             j = len(final_scores)
             theApp = App(args, sess,j)
-            print(i)
+            print(j)
             stateHist, actionHist = theApp.on_execute()
 
 
