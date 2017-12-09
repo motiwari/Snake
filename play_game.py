@@ -51,6 +51,15 @@ def baselineGreedy(pyg):
     y = pyg.snake.y[0]
     d = pyg.snake.last_moved
 
+    if d == config.RIGHT and pyg.apple.x - x > 0 and not isNextMoveCollision(pyg, config.RIGHT):
+        return config.RIGHT
+    elif d == config.LEFT and pyg.apple.x - x < 0 and not isNextMoveCollision(pyg, config.LEFT):
+        return config.LEFT
+   elif d == config.UP and pyg.apple.y - y < 0 and not isNextMoveCollision(pyg, config.UP):
+        return config.UP
+    elif d == config.DOWN and pyg.apple.y - y > 0 and not isNextMoveCollision(pyg, config.DOWN):
+        return config.DOWN
+
     if pyg.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(pyg, config.LEFT):  # Make sure snake isn't moving right
         return config.LEFT
     elif pyg.apple.x - x > 0 and d != config.LEFT and not isNextMoveCollision(pyg, config.RIGHT): # Make sure snake isn't moving left
@@ -355,9 +364,12 @@ if __name__ == "__main__" :
             if os.path.isfile('./finalscores.pkl'):
                 final_scores = pickle.load(open("finalscores.pkl","rb"))
         for i in range(args.runs):
-            j = len(final_scores)
+            j = 0
+            if final_scores:
+                j = len(final_scores)
+                print(j)
             theApp = App(args, sess,j)
-            print(j)
+
             stateHist, actionHist = theApp.on_execute()
 
 

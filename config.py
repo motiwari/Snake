@@ -36,8 +36,8 @@ epsilon_guided = .65 # this controls, when an exploration action is chosen, how 
 conv_n_maps = [32, 64, 64]
 conv_kernel_sizes = [(4,4), (4,4), (4,4)]
 conv_strides = [1, 2, 1]
-conv_paddings = ["SAME"] * 2
-conv_activation = [tf.nn.relu] * 2
+conv_paddings = ["SAME"] * 3
+conv_activation = [tf.nn.elu] * 3
 
 n_hidden1 = 200
 input_height = int(HEIGHT_TILES) + 2
