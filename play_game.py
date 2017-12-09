@@ -51,14 +51,25 @@ def baselineGreedy(pyg):
     y = pyg.snake.y[0]
     d = pyg.snake.last_moved
 
-    if d == config.RIGHT and pyg.apple.x - x > 0 and not isNextMoveCollision(pyg, config.RIGHT):
-        return config.RIGHT
-    elif d == config.LEFT and pyg.apple.x - x < 0 and not isNextMoveCollision(pyg, config.LEFT):
-        return config.LEFT
-   elif d == config.UP and pyg.apple.y - y < 0 and not isNextMoveCollision(pyg, config.UP):
-        return config.UP
-    elif d == config.DOWN and pyg.apple.y - y > 0 and not isNextMoveCollision(pyg, config.DOWN):
+    if pyg.apple.x - x > 0 and pyg.apple.y - y > 0 and not isNextMoveCollision(pyg, config.RIGHT) and not isNextMoveCollision(pyg, config.DOWN):
+        if np.random.rand() < .5:
+            return config.RIGHT
         return config.DOWN
+
+    if pyg.apple.x - x > 0 and pyg.apple.y - y < 0 and not isNextMoveCollision(pyg, config.RIGHT) and not isNextMoveCollision(pyg, config.UP):
+        if np.random.rand() < .5:
+            return config.RIGHT
+        return config.UP
+
+    if pyg.apple.x - x < 0 and pyg.apple.y - y > 0 and not isNextMoveCollision(pyg, config.LEFT) and not isNextMoveCollision(pyg, config.DOWN):
+        if np.random.rand() < .5:
+            return config.LEFT
+        return config.DOWN
+
+    if pyg.apple.x - x < 0 and pyg.apple.y - y < 0 and not isNextMoveCollision(pyg, config.LEFT) and not isNextMoveCollision(pyg, config.UP):
+        if np.random.rand() < .5:
+            return config.LEFT
+        return config.UP
 
     if pyg.apple.x - x < 0 and d != config.RIGHT and not isNextMoveCollision(pyg, config.LEFT):  # Make sure snake isn't moving right
         return config.LEFT
