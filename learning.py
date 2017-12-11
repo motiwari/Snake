@@ -15,7 +15,7 @@ def sample_memories(replay_memory,batch_size):
     return (cols[0], cols[1], cols[2].reshape(-1, 1), cols[3],
             cols[4].reshape(-1, 1))
 
-def update(gameHistory, sess):
+def update(gameHistory, sess, numUpdates):
     # TODO: Reloading is very slow
     if os.path.isfile(cnfg.checkpoint_path + ".index"):
         saver.restore(sess, cnfg.checkpoint_path)
@@ -23,7 +23,7 @@ def update(gameHistory, sess):
         init.run()
         copy_online_to_target.run()
     step = global_step.eval()
-    for i in range(cnfg.num_updates_per_game):
+    for i in range(numUpdates):
         X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
 
         #if len(gameHistory) < 100: #or iteration % training_interval != 0:

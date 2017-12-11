@@ -22,12 +22,12 @@ UP = 2
 DOWN = 3
 
 # For tensorflow parameters
-save_steps = 50  # save the model every 1,000 training steps
-copy_steps = 300  # copy online DQN to target DQN every 'copy_steps' training steps
-discount_rate = 0.98 # discount rate for the q-value algorithm
-batch_size = 500
+save_steps = 1000  # save the model every 1,000 training steps
+copy_steps = 10000  # copy online DQN to target DQN every 'copy_steps' training steps
+discount_rate = 0.95 # discount rate for the q-value algorithm
+batch_size = 50
 training_start = 10000  # start training after game's memory has built up to 'training_start'
-num_updates_per_game = 5
+num_updates_per_game = 5 #this is not currently being used
 checkpoint_path = "./my_dqn.ckpt"
 replay_memory = 500000
 epsilon_guided = .65 # this controls, when an exploration action is chosen, how often it chooses a guided action

@@ -367,6 +367,7 @@ if __name__ == "__main__" :
         replay_memory_size = cnfg.replay_memory
         replay_memory = deque([], maxlen=replay_memory_size)
         final_scores = []
+        totalUpdates = 0
         if args.history:
             if os.path.isfile('./replay_memory.pkl'):
                 replay_memory = pickle.load(open("replay_memory.pkl","rb"))
@@ -374,11 +375,13 @@ if __name__ == "__main__" :
                 print(len(replay_memory))
             if os.path.isfile('./finalscores.pkl'):
                 final_scores = pickle.load(open("finalscores.pkl","rb"))
+            if os.path.isfile('./totalUpdates.pkl'):
+                totalUpdates = pickle.load(open("totalUpdates.pkl","rb"))
         for i in range(args.runs):
             j = 0
             if final_scores:
                 j = len(final_scores)
-                print(j)
+                print("Number of games played: ",j)
             theApp = App(args, sess,j)
 
             stateHist, actionHist = theApp.on_execute()
@@ -389,7 +392,6 @@ if __name__ == "__main__" :
                 final_scores.append(stateHist[-1].score)
                 if args.verbose:
                     print("replay memory len")
-                    #print(replay_memory)
                     print(len(replay_memory))
 
                 gameHistory = pre_processHistory(stateHist, actionHist)
@@ -420,19 +422,24 @@ if __name__ == "__main__" :
                 #     print("\n")
                 replay_memory.extend(gameHistory)
                 if len(replay_memory) >= cnfg.training_start:
-                    update(replay_memory, sess)
-                if i % cnfg.save_steps == 0:
+                    numUpdates = int(len(gameHistory)/4)
+                    totalUpdates += numUpdates
+                    print("Number of Updates this game: ", numUpdates)
+                    update(replay_memory, sess, numUpdates)
+                if totalUpdates % cnfg.save_steps == 0:
 
                     saver.save(sess, cnfg.checkpoint_path)
                     #give it time to save. i'm getting bugs
                     #time.sleep(50.0/1000.0)
                     pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
                     pickle.dump(final_scores,open('finalscores.pkl','wb'))
+                    pickle.dump(totalUpdates,open('totalUpdates.pkl','wb'))
 
                 #this is a critical piece of code! do not delete unless you know what you're doing
-                if i % cnfg.copy_steps == 0:
+                if totalUpdates % cnfg.copy_steps == 0:
                     copy_online_to_target.run()
 
         if args.history:
             pickle.dump(replay_memory,open('replay_memory.pkl','wb'))
             pickle.dump(final_scores,open('finalscores.pkl','wb'))
+            pickle.dump(totalUpdates,open('totalUpdates.pkl','wb'))
