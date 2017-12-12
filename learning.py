@@ -16,13 +16,9 @@ def sample_memories(replay_memory,batch_size):
             cols[4].reshape(-1, 1))
 
 def update(gameHistory, sess, numUpdates):
-    # TODO: Reloading is very slow
-    if os.path.isfile(cnfg.checkpoint_path + ".index"):
-        saver.restore(sess, cnfg.checkpoint_path)
-    else:
-        init.run()
-        copy_online_to_target.run()
+
     step = global_step.eval()
+    print(numUpdates)
     for i in range(numUpdates):
         X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
 
@@ -37,10 +33,12 @@ def update(gameHistory, sess, numUpdates):
         #X_action_val = np.array(X_action_val).reshape(1)
         #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
     #for i in range(50):
-
+        for (a,b),(x,y) in zip(online_vars.items(),target_vars.items()):
+            print('online', b.eval(),'target', y.eval())
         next_q_values = target_q_values.eval(
             feed_dict={X_state: X_next_state_val})
         max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
+        print('next q values', next_q_values)
         y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
 
         # if i > 19000:
