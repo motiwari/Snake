@@ -22,58 +22,14 @@ def update(gameHistory, sess, numUpdates):
     for i in range(numUpdates):
         X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
 
-        #if len(gameHistory) < 100: #or iteration % training_interval != 0:
-        #   return
-
-        # Sample memories and use the target DQN to produce the target Q-Value
-        #X_state_val, X_action_val, rewards, X_next_state_val, continues = (
-        #    sample_memories(batch_size))
-        #X_next_state_val = np.array(X_next_state_val).reshape(1,cnfg.input_width)
-        #X_state_val = np.array(X_state_val).reshape(1,cnfg.input_width)
-        #X_action_val = np.array(X_action_val).reshape(1)
-        #print(X_state_val, X_action_val, 'rewards', rewards, X_next_state_val, 'continues', continues )
-    #for i in range(50):
-        for (a,b),(x,y) in zip(online_vars.items(),target_vars.items()):
-            print('online', b.eval(),'target', y.eval())
         next_q_values = target_q_values.eval(
             feed_dict={X_state: X_next_state_val})
         max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
-        print('next q values', next_q_values)
         y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
 
-        # if i > 19000:
-        #     print('error', error.eval(feed_dict={X_state: X_state_val,
-        #                             X_action: X_action_val, ytrain: y_val}))
-
-    # print('q_value', q_value.eval(feed_dict={X_state: X_state_val,
-    #                            X_action: X_action_val, ytrain: y_val}))
-    # print('ytrain', ytrain.eval(feed_dict={X_state: X_state_val,
-    #                            X_action: X_action_val, ytrain: y_val}))
-    # for a,b,c,d in zip(y_val,X_state_val,X_action_val,continues):
-        #    print(a)
-        #    print(b)
-        #    print(c)
-        #    print(d)
-        #    print('\n')
-        # Train the online DQN
-        #for i in range(300):
-        #q_values = online_q_values.eval(feed_dict={X_state: X_state_val})
-            #print(q_values)
         training_op.run(feed_dict={X_state: X_state_val,
                                    X_action: X_action_val, ytrain: y_val})
 
-    #variable_check_list = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,
-                                       #scope="q_networks/online")
-    #for var in variable_check_list:
-    #    print(var)
-    #    print(var.eval())
-    # Regularly copy the online DQN to the target DQN
-    # if step % cnfg.copy_steps == 0:
-    #     copy_online_to_target.run()
-    #
-    # # And save regularly
-    # if step % cnfg.save_steps == 0:
-    #     saver.save(sess, cnfg.checkpoint_path)
 
 def pre_processHistory(stateHist, actionHist):
         h = []
