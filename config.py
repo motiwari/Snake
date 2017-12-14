@@ -23,7 +23,7 @@ DOWN = 3
 
 # For tensorflow parameters
 save_steps = 1000  # save the model every 1,000 training steps
-copy_steps = 10000  # copy online DQN to target DQN every 'copy_steps' training steps
+copy_steps = 5000  # copy online DQN to target DQN every 'copy_steps' training steps
 discount_rate = 0.95 # discount rate for the q-value algorithm
 batch_size = 500
 training_start = 0  # start training after game's memory has built up to 'training_start'
