@@ -18,13 +18,11 @@ def sample_memories(replay_memory,batch_size):
 def update(gameHistory, sess, numUpdates):
 
     step = global_step.eval()
-    print(numUpdates)
     for i in range(numUpdates):
         X_state_val, X_action_val, rewards, X_next_state_val, continues = sample_memories(gameHistory,cnfg.batch_size)
 
         next_q_values = target_q_values.eval(
             feed_dict={X_state: X_next_state_val})
-        print(next_q_values)
         max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
         y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
 
