@@ -24,6 +24,7 @@ def update(gameHistory, sess, numUpdates):
 
         next_q_values = target_q_values.eval(
             feed_dict={X_state: X_next_state_val})
+        print(next_q_values)
         max_next_q_values = np.max(next_q_values, axis=1, keepdims=True)
         y_val = rewards + continues * cnfg.discount_rate * max_next_q_values
 
@@ -134,22 +135,22 @@ def q_network(X_state, name):
 def epsilon_greedy(q_values, snakeLength, isOnEdge, suggestedAction, numGamesPlayed):
     #print(step)
     epsilon = .8
-    if numGamesPlayed > 6000:
+    if numGamesPlayed > 12000:
         epsilon = .8
 
-    if numGamesPlayed > 12000:
+    if numGamesPlayed > 24000:
         epsilon = .6
 
-    if numGamesPlayed > 18000:
+    if numGamesPlayed > 36000:
         epsilon = .5
 
-    if numGamesPlayed > 24000:
+    if numGamesPlayed > 48000:
         epsilon = .4
 
-    if numGamesPlayed > 30000:
+    if numGamesPlayed > 60000:
         epsilon = .3
 
-    if numGamesPlayed > 40000:
+    if numGamesPlayed > 80000:
         epsilon = .2
 
     # if snakeLength > 10:
